@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Desktop Audio Visualizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="flex items-center justify-center min-h-screen">
+    <div id="container" class="flex flex-col items-center justify-center">
+
+        <div id="canvas-aspect-ratio-container">
+            <canvas id="visualizerCanvas"
+                class="rounded-lg shadow-2xl shadow-violet-500/10"></canvas>
+        </div>
+
+        <div id="start-controls" class="absolute z-30">
+            <button id="startButton"
+                class="glow-button font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105">
+                Start Listening
+            </button>
+        </div>
+
+        <div id="active-controls"
+            class="hidden items-center gap-4 backdrop-blur-sm p-3 rounded-full shadow-lg absolute z-30">
+              <button id="prev-button"
+                class="playback-control-button w-12 h-12 rounded-full flex items-center justify-center">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
+                </svg>
+            </button>
+
+            <div id="song-accordion-wrapper" class="relative">
+                <button id="current-song-display-button" class="song-accordion-button text-sm font-semibold text-gray-300">
+                    <span class="current-song-text">No audio playing</span>
+                    <svg id="song-chevron" class="w-4 h-4 transform transition-transform ml-2" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+                <div id="song-list-container" class="song-list-panel hidden absolute bottom-full">
+                </div>
+            </div>
+
+            <button id="next-button"
+                class="playback-control-button w-12 h-12 rounded-full flex items-center justify-center">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M16 18h2V6h-2zM6 18l8.5-6L6 6z"/>
+                </svg>
+            </button>
+            
+            <button id="pause-button"
+                class="w-12 h-12 rounded-full flex items-center justify-center audio-control-button">
+                <svg id="pause-icon" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M5 4h3v12H5V4zm7 0h3v12h-3V4z" />
+                </svg>
+                <svg id="play-icon" class="w-6 h-6 hidden" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M6 4l12 6-12 6V4z" />
+                </svg>
+            </button>
+            
+            <button id="stop-button"
+                class="w-12 h-12 rounded-full flex items-center justify-center audio-control-button mr-2">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M5 5h10v10H5V5z" />
+                </svg>
+            </button>
+            <div id="volume-slider-wrapper" class="flex items-center gap-2 px-4">
+                <div
+                    class="custom-slider-container relative w-[150px] h-8 rounded-lg flex items-center">
+                    <div class="custom-slider-track-fill absolute h-full rounded-lg"></div>
+                    <div id="volume-thumb"
+                        class="custom-slider-thumb absolute w-10 h-8 rounded-md flex items-center justify-center text-xs font-bold select-none cursor-pointer">
+                        <span class="custom-slider-name">VOL</span>
+                    </div>
+                </div>
+                <input id="volume-slider" type="hidden" min="0" max="1.0" value="0.25" step="0.05">
+            </div>
+        </div>
+
+        <div class="fixed bottom-5 right-5 z-40">
+            <div id="eq-menu"
+                class="absolute bottom-full mb-3 w-72 backdrop-blur-md rounded-lg p-4 space-y-2 transition-all duration-300 transform right-0 origin-bottom-right scale-95 opacity-0 invisible">
+                <h2 class="text-xl font-bold mb-4"></h2>
+                <div class="space-y-4 text-sm">
+                    <div id="eq-bass-slider-wrapper" class="flex flex-col items-center">
+                        <label for="eq-bass" class="text-xs"></label>
+                        <div class="custom-slider-container relative w-full h-8 rounded-lg flex items-center">
+                            <div class="custom-slider-track-fill absolute h-full rounded-lg"></div>
+                            <div id="eq-bass-thumb"
+                                class="custom-slider-thumb absolute w-10 h-8 rounded-md flex items-center justify-center text-xxs font-bold select-none cursor-pointer">
+                                <span class="custom-slider-name">Bass</span>
+                            </div>
+                        </div>
+                        <input id="eq-bass" type="hidden" min="-20" max="20" value="0" step="1">
+                    </div>
+                    <div id="eq-low-mid-slider-wrapper" class="flex flex-col items-center">
+                        <label for="eq-low-mid" class="text-xs"></label>
+                        <div class="custom-slider-container relative w-full h-8 rounded-lg flex items-center">
+                            <div class="custom-slider-track-fill absolute h-full rounded-lg"></div>
+                            <div id="eq-low-mid-thumb"
+                                class="custom-slider-thumb absolute w-10 h-8 rounded-md flex items-center justify-center text-xxs font-bold select-none cursor-pointer">
+                                <span class="custom-slider-name">L-Mid</span>
+                            </div>
+                        </div>
+                        <input id="eq-low-mid" type="hidden" min="-20" max="20" value="0" step="1">
+                    </div>
+                    <div id="eq-mid-slider-wrapper" class="flex flex-col items-center">
+                        <label for="eq-mid" class="text-xs"></label>
+                        <div class="custom-slider-container relative w-full h-8 rounded-lg flex items-center">
+                            <div class="custom-slider-track-fill absolute h-full rounded-lg"></div>
+                            <div id="eq-mid-thumb"
+                                class="custom-slider-thumb absolute w-10 h-8 rounded-md flex items-center justify-center text-xxs font-bold select-none cursor-pointer">
+                                <span class="custom-slider-name">Mid</span>
+                            </div>
+                        </div>
+                        <input id="eq-mid" type="hidden" min="-20" max="20" value="0" step="1">
+                    </div>
+                    <div id="eq-high-mid-slider-wrapper" class="flex flex-col items-center">
+                        <label for="eq-high-mid" class="text-xs"></label>
+                        <div class="custom-slider-container relative w-full h-8 rounded-lg flex items-center">
+                            <div class="custom-slider-track-fill absolute h-full rounded-lg"></div>
+                            <div id="eq-high-mid-thumb"
+                                class="custom-slider-thumb absolute w-10 h-8 rounded-md flex items-center justify-center text-xxs font-bold select-none cursor-pointer">
+                                <span class="custom-slider-name">H-Mid</span>
+                            </div>
+                        </div>
+                        <input id="eq-high-mid" type="hidden" min="-20" max="20" value="0" step="1">
+                    </div>
+                    <div id="eq-treble-slider-wrapper" class="flex flex-col items-center">
+                        <label for="eq-treble" class="text-xs"></label>
+                        <div class="custom-slider-container relative w-full h-8 rounded-lg flex items-center">
+                            <div class="custom-slider-track-fill absolute h-full rounded-lg"></div>
+                            <div id="eq-treble-thumb"
+                                class="custom-slider-thumb absolute w-10 h-8 rounded-md flex items-center justify-center text-xxs font-bold select-none cursor-pointer">
+                                <span class="custom-slider-name">Treble</span>
+                            </div>
+                        </div>
+                        <input id="eq-treble" type="hidden" min="-20" max="20" value="0" step="1">
+                    </div>
+                </div>
+                <div class="mt-6 pt-4 border-t flex justify-center gap-3">
+                    <button id="eq-reset-btn"
+                        class="text-sm px-4 py-2 rounded-full">
+                        Reset
+                    </button>
+                </div>
+            </div>
+            <button id="eq-toggle-btn"
+                class="backdrop-blur-sm p-3 rounded-full relative w-14 h-14 flex items-center justify-center transition-transform duration-300">
+                <svg id="eq-icon-normal" class="w-7 h-7 transition-opacity duration-300" fill="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM7 17v-2h2v2H7zm4-4V7h2v6h-2zm4 4v-6h2v6h-2z" />
+                </svg>
+                <svg id="eq-icon-x" class="w-7 h-7 absolute transition-opacity duration-300 opacity-0"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <div class="fixed bottom-5 left-5 z-40">
+            <div id="settings-menu"
+                class="absolute bottom-full mb-3 w-72 backdrop-blur-md rounded-lg p-4 space-y-2 transition-all duration-300 transform origin-bottom-left scale-95 opacity-0 invisible">
+                <div>
+                    <button id="accordion-visuals"
+                        class="w-full flex justify-between items-center text-left p-3 rounded-lg focus:outline-none">
+                        <span class="font-semibold">Visualizations</span>
+                        <svg id="chevron-visuals" class="w-5 h-5 transform transition-transform" fill="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div id="visual-style-container" class="hidden mt-2 pl-2 space-y-1">
+                    </div>
+                </div>
+                <div>
+                    <button id="accordion-themes"
+                        class="w-full flex justify-between items-center text-left p-3 rounded-lg focus:outline-none">
+                        <span class="font-semibold">Themes</span>
+                        <svg id="chevron-themes" class="w-5 h-5 transform transition-transform" fill="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div id="theme-container" class="hidden mt-2 pl-2 space-y-1">
+                    </div>
+                </div>
+                <div id="background-image-accordion-section" class="hidden">
+                    <button id="accordion-background-images"
+                        class="w-full flex justify-between items-center text-left p-3 rounded-lg focus:outline-none">
+                        <span class="font-semibold">Backgrounds</span>
+                        <svg id="chevron-background-images" class="w-5 h-5 transform transition-transform" fill="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div id="background-image-container" class="hidden mt-2 pl-2 space-y-1">
+                        <button id="no-background-image-btn"
+                            class="w-full text-left px-3 py-2 text-sm rounded-md focus:outline-none theme-button-normal theme-accordion-button">
+                            Use Theme Color
+                        </button>
+                    </div>
+                </div>
+                </div>
+
+            <button id="settings-toggle-btn"
+                class="backdrop-blur-sm p-3 rounded-full relative w-14 h-14 flex items-center justify-center transition-transform duration-300">
+                <svg id="settings-icon-gear" class="w-7 h-7 transition-opacity duration-300" fill="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+                    </path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                <svg id="settings-icon-x" class="w-7 h-7 absolute transition-opacity duration-300 opacity-0"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+    </div>
+
+    <audio id="audioPlayer"></audio>
+
+    <script src="script.js" type="module"></script>
+</body>
+
+</html>

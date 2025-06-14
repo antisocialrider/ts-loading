@@ -1,0 +1,48 @@
+{
+  "activeVisualId": "bars",
+  "activeThemeId": "cyber",
+  "defaultBackgroundImageId": "none",
+  "defaultAudioFileId": "Acceptable in the 80's",
+  "defaultVolume": 0.50,
+  "useDesktopAudio": false,
+  "visuals": [
+    { "id": "bars" },
+    { "id": "ember" },
+    { "id": "circular" },
+    { "id": "pulse" }
+  ],
+  "themes": [
+    { "id": "default" },
+    { "id": "ember" },
+    { "id": "sunset_glow" },
+    { "id": "forest_night" },
+    { "id": "cyber" },
+    { "id": "retrowave" },
+    { "id": "minimalist_gray" },
+    { "id": "high_contrast" },
+    { "id": "vibrant_pop" },
+    { "id": "earthy_dawn" }
+  ],
+  "backgroundImages": [
+    { "id": "img-sunset", "name": "Sunset" },
+    { "id": "img-car", "name": "Car" },
+    { "id": "img-chick", "name": "Woman" },
+    { "id": "img-clockwork", "name": "Clockwork" },
+    { "id": "img-dark", "name": "Dark" },
+    { "id": "img-nebula", "name": "Nebula" },
+    { "id": "img-shhh", "name": "Shhh" },
+    { "id": "img-street", "name": "Street" }
+  ],
+  "audioFiles": [
+    { "id": "1986 Highway", "name": "1986 Highway"},
+    { "id": "Game Boy", "name": "Game Boy"},
+    { "id": "Head First", "name": "Head First"},
+    { "id": "Homeland", "name": "Homeland"},
+    { "id": "Lets go back", "name": "Lets go back"},
+    { "id": "LIL MORI", "name": "LIL MORI"},
+    { "id": "Oceandrive", "name": "Oceandrive"},
+    { "id": "Revelation ", "name": "Revelation "},
+    { "id": "Synthetic Pleasures", "name": "Synthetic Pleasures"},
+    { "id": "VHS", "name": "VHS"}
+  ]
+}
