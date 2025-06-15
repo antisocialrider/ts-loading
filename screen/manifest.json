@@ -1,8 +1,8 @@
 {
   "activeVisualId": "bars",
-  "activeThemeId": "cyber",
+  "activeThemeId": "default",
   "defaultBackgroundImageId": "none",
-  "defaultAudioFileId": "Acceptable in the 80's",
+  "defaultAudioFileId": "1986Highway",
   "defaultVolume": 0.50,
   "useDesktopAudio": false,
   "visuals": [
@@ -34,15 +34,15 @@
     { "id": "img-street", "name": "Street" }
   ],
   "audioFiles": [
-    { "id": "1986 Highway", "name": "1986 Highway"},
-    { "id": "Game Boy", "name": "Game Boy"},
-    { "id": "Head First", "name": "Head First"},
+    { "id": "1986Highway", "name": "1986 Highway"},
+    { "id": "GameBoy", "name": "Game Boy"},
+    { "id": "HeadFirst", "name": "Head First"},
     { "id": "Homeland", "name": "Homeland"},
-    { "id": "Lets go back", "name": "Lets go back"},
-    { "id": "LIL MORI", "name": "LIL MORI"},
+    { "id": "Letsgoback", "name": "Lets go back"},
+    { "id": "LILMORI", "name": "LIL MORI"},
     { "id": "Oceandrive", "name": "Oceandrive"},
     { "id": "Revelation ", "name": "Revelation "},
-    { "id": "Synthetic Pleasures", "name": "Synthetic Pleasures"},
+    { "id": "SyntheticPleasures", "name": "Synthetic Pleasures"},
     { "id": "VHS", "name": "VHS"}
   ]
 }
