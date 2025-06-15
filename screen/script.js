@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const eqBassSliderWrapper = document.getElementById('eq-bass-slider-wrapper');
     const eqBassHiddenInput = document.getElementById('eq-bass');
     const eqLowMidSliderWrapper = document.getElementById('eq-low-mid-slider-wrapper');
-    const eqLowMidHiddenInput = document.getElementById('eq-low-mid'); // Corrected line
+    const eqLowMidHiddenInput = document.getElementById('eq-low-mid');
     const eqMidSliderWrapper = document.getElementById('eq-mid-slider-wrapper');
     const eqMidHiddenInput = document.getElementById('eq-mid');
     const currentSongDisplayButton = document.getElementById('current-song-display-button');
@@ -91,32 +91,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     let saveTimer;
     function debounceSave() {
         clearTimeout(saveTimer);
-        saveTimer = setTimeout(saveSettings, 500); // Save after 500ms of no changes
+        saveTimer = setTimeout(saveSettings, 500);
     }
 
     function saveSettings() {
-        // Save strings
         localStorage.setItem('ts_visual_id', AppState.activeVisualId);
         localStorage.setItem('ts_theme_id', AppState.activeThemeId);
-        localStorage.setItem('ts_bg_image_url', AppState.activeBackgroundImage || 'none'); // Save 'none' if no background image
-
-        // Save integers (convert to string)
+        localStorage.setItem('ts_bg_image_url', AppState.activeBackgroundImage || 'none');
         localStorage.setItem('ts_audio_index', AppState.currentAudioIndex.toString());
-
-        // Save floats (convert to string)
         localStorage.setItem('ts_volume', AppState.volumeGain.toString());
-
-        // Save array (EQ gains) as JSON string
         localStorage.setItem('ts_eq_gains', JSON.stringify(AppState.eqVisualGains));
-
-        // Save boolean as string
         localStorage.setItem('ts_use_desktop_audio', AppState.useDesktopAudio ? 'true' : 'false');
-
-        console.log("Settings saved to localStorage."); // For debugging
     }
 
     function loadSettings() {
-        // Load strings
         const savedVisualId = localStorage.getItem('ts_visual_id');
         if (savedVisualId && AppState.visuals[savedVisualId]) {
             AppState.activeVisualId = savedVisualId;
@@ -137,21 +125,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        // Load integers (parse from string)
         const savedAudioIndexStr = localStorage.getItem('ts_audio_index');
         const savedAudioIndex = savedAudioIndexStr ? parseInt(savedAudioIndexStr, 10) : null;
         if (savedAudioIndex !== null && AppState.audioFiles[savedAudioIndex]) {
             AppState.currentAudioIndex = savedAudioIndex;
         }
 
-        // Load floats (parse from string)
         const savedVolumeStr = localStorage.getItem('ts_volume');
         const savedVolume = savedVolumeStr ? parseFloat(savedVolumeStr) : null;
         if (savedVolume !== null) {
             AppState.volumeGain = savedVolume;
         }
 
-        // Load array from JSON string
         const savedEqGains = localStorage.getItem('ts_eq_gains');
         if (savedEqGains) {
             try {
@@ -164,13 +149,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        // Load boolean from string
         const savedUseDesktopAudio = localStorage.getItem('ts_use_desktop_audio');
         if (savedUseDesktopAudio !== null) {
             AppState.useDesktopAudio = (savedUseDesktopAudio === 'true');
         }
-
-        console.log("Settings loaded from localStorage."); // For debugging
     }
 
     function getHslComponents(colorString) {
@@ -330,12 +312,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 sourceDesktopRadio.addEventListener('change', () => {
                     AppState.useDesktopAudio = true;
                     stopVisualization();
-                    saveSettings(); // Save on change
+                    saveSettings();
                 });
                 sourceFileRadio.addEventListener('change', () => {
                     AppState.useDesktopAudio = false;
                     stopVisualization();
-                    saveSettings(); // Save on change
+                    saveSettings();
                 });
             }
 
@@ -386,7 +368,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (activeButton) {
                 activeButton.classList.add('theme-button-active');
             }
-            if (theme) { // Only save if a valid theme was applied
+            if (theme) {
                 saveSettings();
             }
         } catch (error) {
@@ -583,7 +565,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (AppState.audioFiles.length === 0 || AppState.currentAudioIndex === -1) {
                 if (messageElement) messageElement.textContent = "No audio files available to play.";
                 console.warn("No audio files available to play.");
-                // isStarted will be true from DOMContentLoaded, so visuals will attempt to run.
                 return;
             }
             const fileUrl = AppState.audioFiles[AppState.currentAudioIndex].url;
@@ -606,7 +587,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     document.body.removeEventListener('click', resumeAudio);
                 }, { once: true });
             });
-            // isStarted is handled in DOMContentLoaded
             isPaused = false;
             updateCurrentSongDisplay();
             if (prevButton) prevButton.disabled = false;
@@ -628,7 +608,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 desktopSourceNode = audioContext.createMediaStreamSource(mediaStream);
                 desktopSourceNode.connect(analyser);
-                // isStarted is handled in DOMContentLoaded
                 isPaused = false;
                 updateCurrentSongDisplay('Desktop Audio');
                 if (prevButton) prevButton.disabled = true;
@@ -645,13 +624,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             await audioContext.resume();
         }
 
-        // This block now runs if `startAudioSource` was called and did not immediately return
-        // It ensures visuals and controls are setup, regardless of autoplay issues.
-        if (isStarted) { // isStarted is set to true in DOMContentLoaded now
+        if (isStarted) {
             if (messageElement) messageElement.textContent = '';
             showActiveControls();
             resizeCanvas();
-            draw(); // Explicitly call draw() to ensure visuals start
+            draw();
             if (customVolumeSlider) {
                 customVolumeSlider.updateValue(AppState.volumeGain);
             }
@@ -707,7 +684,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             activeControls.classList.remove('flex');
         }
         if (startControls) {
-            startControls.classList.remove('hidden'); // This might re-show the start button
+            startControls.classList.remove('hidden');
         }
         closeEqMenu();
         closeSideMenu();
@@ -1078,9 +1055,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // --- REMOVED THE ORIGINAL startButton.addEventListener BLOCK HERE ---
-
-    // stopButton.addEventListener('click', stopVisualization);
     pauseButton.addEventListener('click', togglePause);
 
     if (prevButton) {
@@ -1107,7 +1081,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     eqToggleBtn.addEventListener('click', toggleEqPanel);
     eqResetBtn.addEventListener('click', () => {
         applyEqPreset([0, 0, 0, 0, 0]);
-        saveSettings(); // Save after reset
+        saveSettings();
     });
 
     settingsToggleBtn.addEventListener('click', toggleSettingsMenu);
@@ -1142,7 +1116,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (!AppState.useDesktopAudio && audioPlayer) {
                     audioPlayer.volume = newValue;
                 }
-                debounceSave(); // Use debounce for sliders
+                debounceSave();
             }
         );
         customVolumeSlider.updateValue(AppState.volumeGain);
@@ -1176,26 +1150,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                 hiddenInput.id,
                 (newValue) => {
                     AppState.eqVisualGains[i] = newValue;
-                    debounceSave(); // Use debounce for sliders
+                    debounceSave();
                 }
             );
             customEqSliders.push(slider);
         }
     });
 
-    // --- MODIFIED: Auto-start logic ---
-    await loadModulesFromManifest(); // Load manifest data first
-    loadSettings(); // Load saved settings, overwriting defaults where applicable
+    await loadModulesFromManifest();
+    loadSettings();
 
-    // Ensure startControls are always hidden for a loading screen
     if (startControls) {
         startControls.classList.add('hidden');
     }
 
-    // Set isStarted to true immediately, as visualizer should always try to draw
     isStarted = true;
-    showActiveControls(); // Ensure active controls and canvas are visible
-    resizeCanvas(); // Ensure canvas is correctly sized
+    showActiveControls();
+    resizeCanvas();
 
     const audioSourceType = AppState.useDesktopAudio ? 'desktop' : 'file';
 
@@ -1203,24 +1174,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (AppState.audioFiles.length === 0 || AppState.currentAudioIndex === -1) {
             if (messageElement) messageElement.textContent = "No audio files configured. Visualizer running without audio input.";
             console.warn("No audio files configured or default index invalid. Visualizer will run without direct audio input from files.");
-            draw(); // Start visuals even without audio source
+            draw();
         } else {
-            await startAudioSource(audioSourceType); // Attempt to start audio source
+            await startAudioSource(audioSourceType);
         }
     } else if (audioSourceType === 'desktop') {
-        await startAudioSource(audioSourceType); // Attempt to start desktop audio
+        await startAudioSource(audioSourceType);
     } else {
-        // Fallback for unexpected audioSourceType or no audio config at all
         if (messageElement) messageElement.textContent = "No audio source configured. Visualizer running without audio.";
         console.warn("No audio source type configured. Visualizer will run without audio input.");
-        draw(); // Start visuals even without audio source
+        draw();
     }
 
-    // Signal to FiveM that the loading screen is ready
     if (window.invokeNative) {
         window.invokeNative('ready');
     }
-    // --- END MODIFIED ---
 
     window.addEventListener('resize', () => {
         resizeCanvas();
@@ -1234,15 +1202,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.addEventListener('message', (event) => {
         const data = event.data;
         if (data.eventName === 'setLoadingText') {
-            // Your custom logic for displaying loading text, e.g.:
-            // if (document.getElementById('loadingStatus')) {
-            //     document.getElementById('loadingStatus').textContent = data.message;
-            // }
+
         } else if (data.eventName === 'setLoadingProgress') {
-            // Your custom logic for displaying loading progress, e.g.:
-            // if (document.getElementById('loadingProgress')) {
-            //     document.getElementById('loadingProgress').style.width = data.message + '%';
-            // }
+
         }
     });
 });
