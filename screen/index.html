@@ -18,7 +18,7 @@
                 class="rounded-lg shadow-2xl shadow-violet-500/10"></canvas>
         </div>
 
-        <div id="start-controls" class="absolute z-30">
+        <div id="start-controls" class="absolute z-30 hidden">
             <button id="startButton"
                 class="glow-button font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105">
                 Start Listening
@@ -26,59 +26,62 @@
         </div>
 
         <div id="active-controls"
-            class="hidden items-center gap-4 backdrop-blur-sm p-3 rounded-full shadow-lg absolute z-30">
-              <button id="prev-button"
-                class="playback-control-button w-12 h-12 rounded-full flex items-center justify-center">
-                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
-                </svg>
-            </button>
-
-            <div id="song-accordion-wrapper" class="relative">
-                <button id="current-song-display-button" class="song-accordion-button text-sm font-semibold text-gray-300">
-                    <span class="current-song-text">No audio playing</span>
-                    <svg id="song-chevron" class="w-4 h-4 transform transition-transform ml-2" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                </button>
-                <div id="song-list-container" class="song-list-panel hidden absolute bottom-full">
+            class="flex flex-col items-center backdrop-blur-sm p-3 rounded-full shadow-lg absolute z-30">
+            
+            <div id="loading-progress-bar-area" class="loading-progress-area">
+                <div id="loadingStatusText" class="loading-status-text">Loading...</div>
+                <div class="loading-bar-wrapper">
+                    <div id="loadingProgressBar" class="loading-progress-bar" style="width: 0%;"></div>
                 </div>
             </div>
+            <div id="main-playback-row" class="flex items-center gap-4">
+                <button id="prev-button"
+                    class="playback-control-button w-12 h-12 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
+                    </svg>
+                </button>
 
-            <button id="next-button"
-                class="playback-control-button w-12 h-12 rounded-full flex items-center justify-center">
-                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M16 18h2V6h-2zM6 18l8.5-6L6 6z"/>
-                </svg>
-            </button>
-            
-            <button id="pause-button"
-                class="w-12 h-12 rounded-full flex items-center justify-center audio-control-button">
-                <svg id="pause-icon" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M5 4h3v12H5V4zm7 0h3v12h-3V4z" />
-                </svg>
-                <svg id="play-icon" class="w-6 h-6 hidden" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M6 4l12 6-12 6V4z" />
-                </svg>
-            </button>
-            
-            <!--<button id="stop-button"
-                class="w-12 h-12 rounded-full flex items-center justify-center audio-control-button mr-2">
-                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M5 5h10v10H5V5z" />
-                </svg>
-            </button>-->
-            <div id="volume-slider-wrapper" class="flex items-center gap-2 px-4">
-                <div
-                    class="custom-slider-container relative w-[150px] h-8 rounded-lg flex items-center">
-                    <div class="custom-slider-track-fill absolute h-full rounded-lg"></div>
-                    <div id="volume-thumb"
-                        class="custom-slider-thumb absolute w-10 h-8 rounded-md flex items-center justify-center text-xs font-bold select-none cursor-pointer">
-                        <span class="custom-slider-name">VOL</span>
+                <div id="song-accordion-wrapper" class="relative">
+                    <button id="current-song-display-button" class="song-accordion-button text-sm font-semibold text-gray-300">
+                        <span class="current-song-text">No audio playing</span>
+                        <svg id="song-chevron" class="w-4 h-4 transform transition-transform ml-2" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div id="song-list-container" class="song-list-panel hidden absolute bottom-full">
                     </div>
                 </div>
-                <input id="volume-slider" type="hidden" min="0" max="1.0" value="0.25" step="0.05">
+
+                <button id="next-button"
+                    class="playback-control-button w-12 h-12 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M16 18h2V6h-2zM6 18l8.5-6L6 6z"/>
+                    </svg>
+                </button>
+                
+                <button id="pause-button"
+                    class="w-12 h-12 rounded-full flex items-center justify-center audio-control-button">
+                    <svg id="pause-icon" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M5 4h3v12H5V4zm7 0h3v12h-3V4z" />
+                    </svg>
+                    <svg id="play-icon" class="w-6 h-6 hidden" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M6 4l12 6-12 6V4z" />
+                    </svg>
+                </button>
+                
+                <div id="volume-slider-wrapper" class="flex items-center gap-2 px-4">
+                    <div
+                        class="custom-slider-container relative w-[150px] h-8 rounded-lg flex items-center">
+                        <div class="custom-slider-track-fill absolute h-full rounded-lg"></div>
+                        <div id="volume-thumb"
+                            class="custom-slider-thumb absolute w-10 h-8 rounded-md flex items-center justify-center text-xs font-bold select-none cursor-pointer">
+                            <span class="custom-slider-name">VOL</span>
+                        </div>
+                    </div>
+                    <input id="volume-slider" type="hidden" min="0" max="1.0" value="0.25" step="0.05">
+                </div>
             </div>
         </div>
 
@@ -207,7 +210,7 @@
                         </button>
                     </div>
                 </div>
-                </div>
+            </div>
 
             <button id="settings-toggle-btn"
                 class="backdrop-blur-sm p-3 rounded-full relative w-14 h-14 flex items-center justify-center transition-transform duration-300">
@@ -224,6 +227,12 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
             </button>
+        </div>
+
+        <div class="fixed top-5 right-5 z-40">
+            <div id="server-info-panel" class="server-info-panel-style">
+                <div id="dynamic-info-content" class="dynamic-info-content"></div>
+            </div>
         </div>
 
     </div>

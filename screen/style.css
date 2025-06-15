@@ -1,58 +1,49 @@
-/* visualize.css */
 .hidden {
     display: none !important;
 }
 
 body {
     font-family: 'Inter', sans-serif;
-    overflow: hidden; /* Prevent scrollbars when fixed size is larger than viewport */
+    overflow: hidden;
     transition: background-color 0.05s ease-out;
-    background-color: var(--ui-backgrounds-0); /* Use variable */
-    color: var(--ui-texts-0); /* Use variable */
+    background-color: var(--ui-backgrounds-0);
+    color: var(--ui-texts-0);
     display: flex;
-    justify-content: center; /* Centers container horizontally if it were smaller */
-    align-items: center;   /* Centers container vertically if it were smaller */
-    height: 100vh; /* Ensure body explicitly takes full viewport height */
-    width: 100vw; /* Ensure body takes full viewport width */
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100vw;
     margin: 0;
     padding: 0;
 }
 
 #container {
-    /* Now fills the entire viewport available to it */
     width: 100%;
-    height: 100%; /* Will now correctly inherit 100vh from body */
+    height: 100%;
     text-align: center;
-    padding: 0; /* Ensures no padding interferes */
+    padding: 0;
     display: flex;
-    flex-direction: column; /* Stacks children vertically */
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     position: relative;
-    /* Removed transform-origin as transform: scale is no longer applied here */
 }
 
-/* Styles for the canvas wrapper, now proportionally sized */
 #canvas-aspect-ratio-container {
     position: absolute;
-    
     width: 50vw;
-    height: calc(50vw * (9 / 16)); /* Maintain 16:9 aspect ratio */
-
-    /* Set maximum dimensions to prevent it from becoming excessively large on huge screens */
+    height: calc(50vw * (9 / 16));
     max-width: 960px;
     max-height: 540px;
-    
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background-color: var(--ui-backgrounds-0); /* Use opaque background color from theme */
-    border-radius: 0.25rem; /* MORE BOXY: Slightly less rounded */
-    box-shadow: 0 25px 50px -12px color-mix(in srgb, var(--ui-colours-0) 30%, transparent); /* Use theme color with opacity */
+    background-color: var(--ui-backgrounds-0);
+    box-shadow: 0 25px 50px -12px rgba(255, 0, 255, 0.3);
+    border-radius: 0.25rem;
 }
 
 #visualizerCanvas {
-    /* Canvas now fills its new parent container (canvas-aspect-ratio-container) */
     width: 100%;
     height: 100%;
     background-color: transparent;
@@ -60,27 +51,26 @@ body {
     border-radius: 0;
 }
 
-/* General Button Styles (apply to all buttons including those in active-controls and menus) */
 button {
-    background-color: var(--ui-buttons-0); /* Use variable */
-    color: var(--ui-texts-0); /* Use variable */
+    background-color: var(--ui-buttons-0);
+    color: var(--ui-texts-0);
     transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, box-shadow 0.2s ease-in-out, transform 0.1s ease-out;
     border: none;
     cursor: pointer;
     padding: 0.75rem 1.5rem;
-    border-radius: 0.25rem; /* MORE BOXY: Less rounded for general buttons */
+    border-radius: 0.25rem;
     font-size: 1rem;
 }
 
 button:hover {
-    background-color: var(--ui-buttons-1); /* Use variable */
-    color: var(--ui-texts-0); /* Use variable */
-    transform: translateY(-2px); /* Subtle lift on hover */
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3); /* Add a subtle shadow */
+    background-color: var(--ui-buttons-1);
+    color: var(--ui-texts-0);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
 
 button:active {
-    transform: translateY(0); /* "Press down" effect */
+    transform: translateY(0);
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
@@ -95,9 +85,8 @@ button:active {
                 0 0 25px var(--ui-colours-0);
 }
 
-/* Style for the start-controls */
 #start-controls {
-    background: var(--ui-backgrounds-0); /* Use opaque background color from theme */
+    background: var(--ui-backgrounds-0);
     position: absolute;
     bottom: 2vh;
     left: 50%;
@@ -106,19 +95,18 @@ button:active {
     width: auto;
 }
 
-/* Styles for Previous and Next buttons (now separate) */
 .playback-control-button {
-    background-color: var(--ui-buttons-0); /* Default button background */
-    color: var(--ui-texts-0); /* Icon color */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3); /* Subtle shadow */
+    background-color: var(--ui-buttons-0);
+    color: var(--ui-texts-0);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out, transform 0.1s ease-out;
-    border-radius: 0.15rem; /* MORE BOXY: Slightly rounded corners */
-    width: 3.5rem !important; /* Unified width for consistency */
-    height: 3.5rem !important; /* Unified height for all playback control buttons */
+    border-radius: 0.15rem;
+    width: 3.5rem !important;
+    height: 3.5rem !important;
 }
 
 .playback-control-button:hover {
-    background-color: var(--ui-buttons-1); /* Hover background color */
+    background-color: var(--ui-buttons-1);
     box-shadow: 0 4px 8px rgba(0,0,0,0.4);
     transform: translateY(-1px);
 }
@@ -126,120 +114,104 @@ button:active {
     transform: translateY(1px);
 }
 
-/* Styles for the Song Accordion Button */
 .song-accordion-button {
-    background: var(--ui-backgrounds-1); /* Secondary background for the button */
-    color: var(--ui-texts-0); /* Text color from theme */
+    background: var(--ui-backgrounds-1);
+    color: var(--ui-texts-0);
     padding: 0.6rem 1.2rem;
-    border-radius: 0.25rem; /* MORE BOXY: Less rounded */
-    display: flex; /* Make it a flex container */
+    border-radius: 0.25rem;
+    display: flex;
     align-items: center;
-    justify-content: space-between; /* This will push text and chevron to ends */
+    justify-content: space-between;
     min-width: 180px;
-    max-width: 280px; /* Make it slightly wider */
-    white-space: nowrap; /* Keep text on single line */
-    overflow: hidden; /* Hide overflow initially */
-    text-overflow: ellipsis; /* Add ellipsis for overflow (will be overridden by marquee) */
+    max-width: 280px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     font-size: 0.95rem;
     font-weight: 500;
     cursor: pointer;
-    border: 1px solid color-mix(in srgb, var(--ui-border-color, #4a5568) 30%, transparent);
+    border: 1px solid rgba(74, 85, 104, 0.3); 
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.4), 0 2px 5px rgba(0,0,0,0.3);
     transition: all 0.2s ease-out;
     height: 3.5rem !important;
-
-    /* NEW: Ensure chevron stays on the right and make text container */
-    position: relative; /* Allow positioning children */
-    padding-right: calc(0.6rem + 16px + 0.5rem); /* Space for chevron + its width + its margin */
-    /* Adjust padding-left if needed to balance with the right side */
+    position: relative;
+    padding-right: calc(0.6rem + 16px + 0.5rem);
 }
 
-/* NEW: Styles for the chevron icon to fix its position */
 #song-chevron {
     position: absolute;
-    right: 0.6rem; /* Align with right padding */
+    right: 0.6rem;
     top: 50%;
-    transform: translateY(-50%) rotate(0deg); /* Initial state */
-    transition: transform 0.2s ease-out; /* Smooth rotation */
-    pointer-events: none; /* Ensure clicks go to button, not svg */
+    transform: translateY(-50%) rotate(0deg);
+    transition: transform 0.2s ease-out;
+    pointer-events: none;
 }
 
-/* NEW: Styles for the text content within the button to enable scrolling */
 .song-accordion-button {
-    display: inline-block; /* Essential for marquee effect */
+    display: inline-block;
     white-space: nowrap;
-    overflow: hidden; /* Hide overflow of the span itself */
-    text-overflow: ellipsis; /* Fallback ellipsis if marquee is not active */
-    flex-grow: 1; /* Allow text to take up available space */
-    padding-right: 0.5rem; /* Small space before chevron */
-    /* For marquee effect, we'll remove text-overflow: ellipsis and add animation */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-grow: 1;
+    padding-right: 0.5rem;
 }
 
 .current-song-text {
-    display: inline-block; /* Essential for marquee effect */
+    display: inline-block;
     white-space: nowrap;
-    overflow: hidden; /* Hide overflow of the span itself */
-    text-overflow: ellipsis; /* Fallback ellipsis if marquee is not active */
-    flex-grow: 1; /* Allow text to take up available space */
-    padding-right: 0.5rem; /* Small space before chevron */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-grow: 1;
+    padding-right: 0.5rem;
     margin-right: 15%;
-    /* For marquee effect, we'll remove text-overflow: ellipsis and add animation */
 }
 
 #current-song-display-button{
     min-width: 100%;
     max-width: 100%;
 }
-/* Keyframe animation for scrolling text */
+
 @keyframes marquee {
     0% { transform: translateX(0); }
     100% { transform: translateX(var(--marquee-distance)); }
 }
 
-/* Class to apply for scrolling effect */
 .song-accordion-button .current-song-text.scrolling {
     animation: marquee var(--marquee-duration) linear infinite;
-    text-overflow: clip; /* Override ellipsis when scrolling */
+    text-overflow: clip;
 }
 
 .song-accordion-button:hover {
-    background-color: color-mix(in srgb, var(--ui-backgrounds-1) 80%, white);
+    background-color: rgba(26, 0, 51, 0.8);
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.5), 0 4px 8px rgba(0,0,0,0.4);
 }
 
 .song-accordion-button.active {
-    background-color: var(--ui-colours-0); /* Active state color */
+    background-color: var(--ui-colours-0);
     color: var(--ui-texts-0);
     box-shadow: 0 0 8px var(--ui-colours-0);
 }
 
-/* Styles for the Song List Panel */
 .song-list-panel {
-    background: var(--ui-backgrounds-0); /* Opaque background */
+    background: var(--ui-backgrounds-0);
     backdrop-filter: blur(8px) saturate(1.8);
-    border: 1px solid color-mix(in srgb, var(--ui-border-color, #4a5568) 50%, transparent);
-    border-radius: 0.25rem; /* MORE UNIFORM: Match button/menu border-radius */
-    padding: 0.5rem; /* SLIGHTLY REDUCED PADDING for a denser list */
+    border: 1px solid rgba(74, 85, 104, 0.5); 
+    border-radius: 0.25rem;
+    padding: 0.5rem;
     box-shadow: 0 5px 15px rgba(0,0,0,0.5), 0 0 10px var(--ui-colours-0);
     z-index: 35;
     top: auto;
     left: 50%;
     transform: translateX(-50%);
-    
-    /* ADJUSTED WIDTH: Make it match the song-accordion-button's effective width */
-    /* song-accordion-button min-width: 180px, max-width: 280px, padding 0.6rem 1.2rem. */
-    /* Let's make the panel's width consistent with the max-width of the button. */
-    width: 280px; /* Set directly to max-width of song-accordion-button, or slightly more */
-    
-    max-height: 250px; /* SLIGHTLY INCREASED MAX HEIGHT for more visible songs */
-    overflow-y: auto; /* Enable scrolling */
+    width: 280px;
+    max-height: 250px;
+    overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: var(--ui-colours-0) transparent;
 }
 
-/* Song list item styles */
 .song-list-panel button {
-    width: 100%; /* ENSURE THIS IS PRESENT AND UNCHANGED */
+    width: 100%;
     text-align: left;
     padding: 0.4rem 0.6rem;
     border-radius: 0.15rem;
@@ -256,21 +228,19 @@ button:active {
 }
 
 .song-list-panel button:hover {
-    background-color: color-mix(in srgb, var(--ui-backgrounds-1) 50%, transparent); /* Subtle hover */
-    color: var(--ui-texts-0); /* Darker text on hover */
-    transform: none; /* Override general button transform */
-    box-shadow: none; /* Override general button shadow */
+    background-color: rgba(26, 0, 51, 0.5);
+    color: var(--ui-texts-0);
+    transform: none;
+    box-shadow: none;
 }
 
 .song-list-panel button.active-song {
-    background-color: var(--ui-colours-0); /* Active song highlight */
+    background-color: var(--ui-colours-0);
     color: var(--ui-texts-0);
-    font-weight: 600;
     box-shadow: 0 0 5px var(--ui-colours-0);
-    border: 1px solid var(--ui-colours-0); /* ADDED: Subtle border for active song */
+    border: 1px solid var(--ui-colours-0);
 }
 
-/* Webkit scrollbar styling for song list */
 .song-list-panel::-webkit-scrollbar {
     width: 6px;
 }
@@ -284,114 +254,112 @@ button:active {
     border: 1px solid transparent;
 }
 
-/* Active Controls Bar Styling */
 #active-controls {
-    background: var(--ui-backgrounds-0); /* Use opaque background color from theme */
-    backdrop-filter: blur(10px) saturate(1.8); /* Enhanced blur and saturation for a stronger frosted glass effect */
-    border: 1px solid color-mix(in srgb, var(--ui-border-color, #4a5568) 60%, transparent); /* Slightly LESS SUBTLE border for more definition */
-    padding: 1rem 1.5rem; /* INCREASED PADDING for more spacious feel */
-    border-radius: 0.25rem; /* MORE BOXY: Less rounded */
-    /* Removed individual gap property here as justify-content handles spacing now */
+    background: var(--ui-backgrounds-0);
+    backdrop-filter: blur(10px) saturate(1.8);
+    border: 1px solid rgba(74, 85, 104, 0.6); 
+    padding: 1rem 1.5rem;
+    border-radius: 0.25rem;
     position: absolute;
     bottom: 2vh;
     left: 50%;
     transform: translateX(-50%);
-    
     width: 750px;
     max-width: 750px;
     min-width: 750px;
-    
-    box-shadow: 0 12px 35px rgba(0,0,0,0.6), 0 0 25px var(--ui-colours-0); /* STRONGER initial shadow and glow */
+    box-shadow: 0 12px 35px rgba(0,0,0,0.6), 0 0 25px var(--ui-colours-0);
     transition: all 0.3s ease-out;
-
-    /* NEW: Flex properties to distribute its direct children (Prev, Song, Next, Pause, Stop, Volume) */
-    display: flex; /* Make it a flex container */
-    justify-content: space-between; /* Distribute space evenly between its main child groups */
-    align-items: center; /* Vertically align items */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 1rem;
 }
 
-/* Individual Buttons within Active Controls - Now unified with playback-control-button style */
+#main-playback-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    justify-content: space-between;
+    width: 100%;
+}
+
+
 #active-controls button {
     padding: 0;
-    border-radius: 0.2rem; /* MORE BOXY: Less rounded for circular buttons */
+    border-radius: 0.2rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--ui-buttons-0); /* Default button background */
-    color: var(--ui-texts-0); /* Icon color */
-    box-shadow: 0 3px 6px rgba(0,0,0,0.4); /* Subtle shadow for circular buttons */
+    background-color: var(--ui-buttons-0);
+    color: var(--ui-texts-0);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.4);
     transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, box-shadow 0.2s ease-in-out, transform 0.1s ease-out;
-    width: 3.5rem !important; /* Unified width for consistency */
-    height: 3.5rem !important; /* Unified height for all active control buttons */
+    width: 3.5rem !important;
+    height: 3.5rem !important;
 }
 
-/* Specific sizing for Play/Pause and Stop buttons which are now inside active-controls */
 #active-controls #pause-button,
 #active-controls #stop-button {
-    width: 3.8rem; /* Apply the size directly here */
+    width: 3.8rem;
     height: 3.8rem;
-    background-color: var(--ui-colours-1); /* Stop button distinctive color */
-    color: var(--ui-texts-0); /* Icon color */
-    box-shadow: 0 4px 8px rgba(0,0,0,0.4), 0 0 10px var(--ui-colours-1); /* Subtle glow for stop button */
+    background-color: var(--ui-colours-1);
+    color: var(--ui-texts-0);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4), 0 0 10px var(--ui-colours-1);
 }
 
 #active-controls button:hover {
-    background-color: var(--ui-buttons-1); /* Hover background color */
-    box-shadow: 0 5px 10px rgba(0,0,0,0.5); /* Stronger shadow on hover */
-    transform: translateY(-1.5px); /* Slightly more subtle lift */
+    background-color: var(--ui-buttons-1);
+    box-shadow: 0 5px 10px rgba(0,0,0,0.5);
+    transform: translateY(-1.5px);
 }
 #active-controls button:active {
     transform: translateY(1px);
 }
 
 #active-controls #stop-button {
-    background-color: var(--ui-colours-1); /* Stop button distinctive color */
-    color: var(--ui-texts-0); /* Icon color */
-    box-shadow: 0 4px 8px rgba(0,0,0,0.4), 0 0 10px var(--ui-colours-1); /* Subtle glow for stop button */
+    background-color: var(--ui-colours-1);
+    color: var(--ui-texts-0);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4), 0 0 10px var(--ui-colours-1);
 }
 
 #active-controls #pause-button:hover,
 #active-controls #stop-button:hover {
-    background-color: color-mix(in srgb, var(--ui-colours-1) 80%, black); /* Darker on hover */
-    box-shadow: 0 6px 12px rgba(0,0,0,0.5), 0 0 15px var(--ui-colours-1), 0 0 25px var(--ui-colours-1); /* Stronger glow on hover */
+    background-color: rgba(0, 255, 255, 0.8); 
+    box-shadow: 0 6px 12px rgba(0,0,0,0.5), 0 0 15px var(--ui-colours-1), 0 0 25px var(--ui-colours-1);
 }
 
-/* Icons within Active Controls Buttons */
 #active-controls button svg {
-    width: 2rem; /* LARGER icons */
+    width: 2rem;
     height: 2rem;
 }
 
-/* Current Song Display */
 .current-song-display {
-    width: 220px; /* Increased width for longer song titles */
-    color: var(--ui-texts-0); /* Text color from theme */
-    font-size: 1rem; /* Slightly larger font */
-    font-weight: 600; /* Bolder font */
-    white-space: nowrap; /* Prevent wrapping */
+    width: 220px;
+    color: var(--ui-texts-0);
+    font-size: 1rem;
+    font-weight: 600;
+    white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis; /* Add ellipsis for overflow */
+    text-overflow: ellipsis;
     text-align: center;
-    padding: 0 0.8rem; /* More internal padding */
-    flex-shrink: 0; /* Prevent shrinking */
+    padding: 0 0.8rem;
+    flex-shrink: 0;
 }
 
-/* Volume Slider Integration (ensure it visually fits better) */
-/* The volume slider wrapper still has w-[150px] from HTML, which defines its length. */
 #volume-slider-wrapper {
     display: flex;
     align-items: center;
-    gap: 0.6rem; /* Slightly increased gap */
+    gap: 0.6rem;
     padding: 0;
-    margin: 0 0.8rem; /* Increased margin to separate from other elements */
-    flex-shrink: 0; /* Prevent shrinking */
+    margin: 0 0.8rem;
+    flex-shrink: 0;
 }
 
-/* Custom Slider Styles - Unified and Enhanced Look (using CSS variables) */
 .custom-slider-container {
-    background-color: color-mix(in srgb, var(--ui-sliders-0) 50%, transparent); /* Semi-transparent base track */
-    height: 10px; /* SLIGHTLY THICKER track thickness */
-    border-radius: 0.15rem; /* MORE BOXY: Sharper corners */
+    background-color: rgba(51, 51, 51, 0.5); 
+    height: 10px;
+    border-radius: 0.15rem;
     position: relative;
     cursor: pointer;
     overflow: hidden;
@@ -399,147 +367,136 @@ button:active {
 }
 
 .custom-slider-track-fill {
-    background-color: var(--ui-sliders-1); /* Vibrant fill color */
+    background-color: var(--ui-sliders-1);
     height: 100%;
     position: absolute;
     left: 0;
     top: 0;
-    border-radius: 0.15rem; /* MORE BOXY: Match container rounding */
-    transition: width 0.1s ease-out; /* Smooth transition for the fill bar */
+    border-radius: 0.15rem;
+    transition: width 0.1s ease-out;
 }
 
 .custom-slider-thumb {
-    background-color: var(--ui-buttons-0); /* Thumb color (different from fill) */
-    width: 32px; /* SLIGHTLY WIDER thumb */
-    height: 22px; /* SLIGHTLY TALLER thumb */
-    border-radius: 3px; /* MORE BOXY: Sharper corners */
+    background-color: var(--ui-buttons-0);
+    width: 32px;
+    height: 22px;
+    border-radius: 3px;
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6), 0 0 10px var(--ui-sliders-2); /* Glow matching thumb color */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6), 0 0 10px var(--ui-sliders-2);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--ui-texts-0); /* Text color */
-    font-size: 0.75rem; /* Slightly larger font size */
+    color: var(--ui-texts-0);
+    font-size: 0.75rem;
     font-weight: bold;
     cursor: grab;
     transition: background-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out, transform 0.15s ease-in-out;
-    border: 1px solid var(--ui-sliders-2); /* Border matching the thumb color */
+    border: 1px solid var(--ui-sliders-2);
 }
 
 .custom-slider-thumb:hover {
-    background-color: color-mix(in srgb, var(--ui-sliders-2) 80%, white); /* Lighter on hover */
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.7), 0 0 15px var(--ui-sliders-2), 0 0 25px var(--ui-sliders-2); /* Stronger glow */
-    transform: translateY(-50%) scale(1.05); /* Subtle scale effect on hover */
+    background-color: rgba(85, 85, 85, 0.8); 
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.7), 0 0 15px var(--ui-sliders-2), 0 0 25px var(--ui-sliders-2);
+    transform: translateY(-50%) scale(1.05);
 }
 
 .custom-slider-thumb.cursor-grabbing {
     cursor: grabbing;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.8), 0 0 10px var(--ui-sliders-2); /* Reduced shadow/glow when grabbed */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.8), 0 0 10px var(--ui-sliders-2);
     transform: translateY(-50%) scale(0.98);
 }
 
-/* Specific adjustments that affect container widths that are not overridden by general styles */
 #volume-slider-wrapper .custom-slider-container {
-    width: 150px; /* Explicit width from HTML, applies only to volume slider */
+    width: 150px;
 }
 
-/* Explicitly target the custom-slider-name within the EQ thumbs for font size consistency */
 #eq-menu .custom-slider-thumb .custom-slider-name {
-    font-size: 0.75rem; /* Unified with general thumb text size */
+    font-size: 0.75rem;
 }
 
-/* Settings and EQ Menus - Unified with Song List Panel Look */
 #settings-menu {
-    background: var(--ui-backgrounds-0); /* Opaque background */
-    backdrop-filter: blur(8px) saturate(1.8); /* Match song list panel blur */
-    border: 1px solid color-mix(in srgb, var(--ui-border-color, #4a5568) 50%, transparent);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.5), 0 0 10px var(--ui-colours-0); /* Match song list panel shadow */
+    background: var(--ui-backgrounds-0);
+    backdrop-filter: blur(8px) saturate(1.8);
+    border: 1px solid rgba(74, 85, 104, 0.5); 
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5), 0 0 10px var(--ui-colours-0);
     transition: opacity 0.3s ease-out, transform 0.3s ease-out;
-    padding: 0.8rem; /* Unified padding for a denser look */
-    border-radius: 0.25rem; /* MORE BOXY: Match song list panel border-radius */
-    
+    padding: 0.8rem;
+    border-radius: 0.25rem;
     position: absolute;
-    bottom: calc(2vh + 3.5rem + 0.5rem); /* Position above its toggle button + a small gap */
-                                         /* 3.5rem is toggle button height, 0.5rem is gap */
-    width: 288px; /* Fixed width as before */
-    z-index: 45; /* Ensure menus are above content */
+    bottom: calc(2vh + 3.5rem + 0.5rem);
+    width: 288px;
+    z-index: 45;
 }
 
 #eq-menu {
-    background: var(--ui-backgrounds-0); /* Opaque background */
-    backdrop-filter: blur(8px) saturate(1.8); /* Match song list panel blur */
-    border: 1px solid color-mix(in srgb, var(--ui-border-color, #4a5568) 50%, transparent);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.5), 0 0 10px var(--ui-colours-0); /* Match song list panel shadow */
+    background: var(--ui-backgrounds-0);
+    backdrop-filter: blur(8px) saturate(1.8);
+    border: 1px solid rgba(74, 85, 104, 0.5); 
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5), 0 0 10px var(--ui-colours-0);
     transition: opacity 0.3s ease-out, transform 0.3s ease-out;
-    padding: 0.8rem; /* Unified padding for a denser look */
-    border-radius: 0.25rem; /* MORE BOXY: Match song list panel border-radius */
-    
+    padding: 0.8rem;
+    border-radius: 0.25rem;
     position: absolute;
-    bottom: calc(2vh + 3.5rem + 0.5rem); /* Position above its toggle button + a small gap */
-                                         /* 3.5rem is toggle button height, 0.5rem is gap */
-    width: 288px; /* Fixed width as before */
-    z-index: 45; /* Ensure menus are above content */
+    bottom: calc(2vh + 3.5rem + 0.5rem);
+    width: 288px;
+    z-index: 45;
 }
 
-/* Specific transform for initial invisible state */
 #settings-menu.invisible, #eq-menu.invisible {
     opacity: 0;
-    transform: translateY(20px) scale(0.95); /* Slides up from slightly below and scales in */
+    transform: translateY(20px) scale(0.95);
 }
 
-/* Specific transform for visible state */
 #settings-menu.visible, #eq-menu.visible {
     opacity: 1;
     transform: translateY(0) scale(1);
 }
 
 #settings-menu h2, #eq-menu h2 {
-    color: var(--ui-texts-0); /* Text color from theme */
-    font-size: 1.2rem; /* Slightly smaller heading for better fit */
+    color: var(--ui-texts-0);
+    font-size: 1.2rem;
     font-weight: 700;
-    margin-bottom: 0.8rem; /* Reduced space below heading */
-    text-align: center; /* Center the heading */
-    border-bottom: 1px solid color-mix(in srgb, var(--ui-border-color, #4a5568) 20%, transparent); /* Subtle separator */
-    padding-bottom: 0.5rem; /* Padding below separator */
+    margin-bottom: 0.8rem;
+    text-align: center;
+    border-bottom: 1px solid rgba(74, 85, 104, 0.2); 
+    padding-bottom: 0.5rem;
 }
 
-/* Accordion Buttons within Settings/EQ Menus - Unified with Song List Item Look */
 #settings-menu button, #eq-menu button {
     width: 100%;
     text-align: left;
-    padding: 0.5rem 0.8rem; /* Match song list item padding */
-    border-radius: 0.15rem; /* Match song list item border-radius */
-    font-size: 0.9rem; /* Match song list item font size */
-    background-color: transparent; /* No background by default */
-    color: var(--ui-texts-1); /* Lighter text color */
+    padding: 0.5rem 0.8rem;
+    border-radius: 0.15rem;
+    font-size: 0.9rem;
+    background-color: transparent;
+    color: var(--ui-texts-1);
     transition: background-color 0.1s ease-in-out, color 0.1s ease-in-out;
-    margin-bottom: 2px; /* Small gap between list items */
-    display: flex; /* Ensure flex for icon positioning */
-    justify-content: space-between; /* Push text and icon to ends */
+    margin-bottom: 2px;
+    display: flex;
+    justify-content: space-between;
     align-items: center;
     font-weight: 500;
-    border: none; /* Remove general button border */
+    border: none;
 }
 
 #settings-menu button:hover, #eq-menu button:hover {
-    background-color: color-mix(in srgb, var(--ui-backgrounds-1) 50%, transparent); /* Subtle hover */
-    color: var(--ui-texts-0); /* Darker text on hover */
-    transform: none; /* Override general button transform */
-    box-shadow: none; /* Override general button shadow */
+    background-color: rgba(26, 0, 51, 0.5); 
+    color: var(--ui-texts-0);
+    transform: none;
+    box-shadow: none;
 }
 
 #settings-menu button.theme-button-active,
 #eq-menu button.theme-button-active {
-    background-color: var(--ui-colours-0); /* Active accordion button color */
+    background-color: var(--ui-colours-0);
     color: var(--ui-texts-0);
     font-weight: 600;
-    box-shadow: 0 0 5px var(--ui-colours-0); /* Match active song item glow */
-    border: 1px solid var(--ui-colours-0); /* Added border for active state */
+    box-shadow: 0 0 5px var(--ui-colours-0);
+    border: 1px solid var(--ui-colours-0);
 }
 
-/* Styles for accordion content containers - Unified with Song List Panel Item styling */
 #visual-style-container,
 #theme-container,
 #background-image-container,
@@ -547,20 +504,17 @@ button:active {
     padding-top: 0.5rem;
     padding-bottom: 0.5rem;
     padding-left: 0.5rem;
-    border-top: 1px solid color-mix(in srgb, var(--ui-border-color, #4a5568) 20%, transparent);
+    border-top: 1px solid rgba(74, 85, 104, 0.2); 
     margin-top: 0.5rem;
-    max-height: 200px; /* Limit height for scrollable content */
+    max-height: 200px;
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: var(--ui-colours-0) transparent;
-    
-    /* Ensure internal buttons also adopt boxy style */
-    display: flex; /* Make content area flex to arrange items */
-    flex-direction: column; /* Stack items vertically */
-    gap: 2px; /* Small gap between options */
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
-/* Webkit (Chrome, Safari) scrollbar styling */
 #visual-style-container::-webkit-scrollbar,
 #theme-container::-webkit-scrollbar,
 #background-image-container::-webkit-scrollbar,
@@ -583,18 +537,15 @@ button:active {
     border: 1px solid transparent;
 }
 
-
-/* Specific styles for the toggle buttons (settings/eq) */
-/* Specific styles for the toggle buttons (settings/eq) */
 #settings-toggle-btn {
-    background: var(--ui-backgrounds-0); /* Use opaque background color from theme */
+    background: var(--ui-backgrounds-0);
     backdrop-filter: blur(4px) saturate(1.8);
-    border: 1px solid color-mix(in srgb, var(--ui-border-color, #4a5568) 50%, transparent);
-    box-shadow: 0 5px 10px rgba(0,0,0,0.4), 0 0 7.5px var(--ui-colours-0); /* Subtle shadow and glow for menus */
+    border: 1px solid rgba(74, 85, 104, 0.5); 
+    box-shadow: 0 5px 10px rgba(0,0,0,0.4), 0 0 7.5px var(--ui-colours-0);
     transition: opacity 0.3s ease-out, transform 0.3s ease-out;
-    width: 3.5rem !important; /* Unified width */
-    height: 3.5rem !important; /* Unified height */
-    border-radius: 0.2rem; /* MORE BOXY: Less rounded for circular buttons */
+    width: 3.5rem !important;
+    height: 3.5rem !important;
+    border-radius: 0.2rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -603,9 +554,9 @@ button:active {
 }
 
 #startButton {
-    width: auto; /* Unified width */
-    height: 3.5rem !important; /* Unified height */
-    border-radius: 0.2rem; /* MORE BOXY: Less rounded for circular buttons */
+    width: auto;
+    height: 3.5rem !important;
+    border-radius: 0.2rem;
 }
 
 #song-accordion-wrapper {
@@ -613,43 +564,184 @@ button:active {
 }
 
 #eq-toggle-btn {
-    background: var(--ui-backgrounds-0); /* Use opaque background color from theme */
+    background: var(--ui-backgrounds-0);
     backdrop-filter: blur(4px) saturate(1.8);
-    border: 1px solid color-mix(in srgb, var(--ui-border-color, #4a5568) 50%, transparent);
-    box-shadow: 0 5px 10px rgba(0,0,0,0.4), 0 0 7.5px var(--ui-colours-0); /* Subtle shadow and glow for menus */
+    border: 1px solid rgba(74, 85, 104, 0.5); 
+    box-shadow: 0 5px 10px rgba(0,0,0,0.4), 0 0 7.5px var(--ui-colours-0);
     transition: opacity 0.3s ease-out, transform 0.3s ease-out;
-    width: 3.5rem !important; /* Unified width */
-    height: 3.5rem !important; /* Unified height */
-    border-radius: 0.2rem; /* MORE BOXY: Less rounded for circular buttons */
+    width: 3.5rem !important;
+    height: 3.5rem !important;
+    border-radius: 0.2rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: 15px; /* This margin provides the spacing from the right edge */
+    margin-right: 15px;
     color: var(--ui-texts-0);
 }
 
 #settings-toggle-btn:hover, #eq-toggle-btn:hover {
     background-color: var(--ui-buttons-1);
     transform: translateY(-1px);
-    box-shadow: 0 5px 10px rgba(0,0,0,0.5), 0 0 12px var(--ui-colours-0); /* Stronger glow on hover */
+    box-shadow: 0 5px 10px rgba(0,0,0,0.5), 0 0 12px var(--ui-colours-0);
 }
 #settings-toggle-btn:active, #eq-toggle-btn:active {
     transform: translateY(1px);
 }
 
 #settings-toggle-btn svg, #eq-toggle-btn svg {
-    width: 1.8rem; /* Larger icons */
+    width: 1.8rem;
     height: 1.8rem;
 }
 
 #eq-reset-btn {
-    background-color: var(--ui-colours-0); /* Use variable */
-    color: var(--ui-texts-0); /* Use variable */
-    padding: 0.6rem 1.2rem; /* Slightly larger padding */
-    border-radius: 0.25rem; /* MORE BOXY: Less rounded */
+    background-color: var(--ui-colours-0);
+    color: var(--ui-texts-0);
+    padding: 0.6rem 1.2rem;
+    border-radius: 0.25rem;
     font-weight: 600;
 }
 
 #eq-reset-btn:hover {
-    background-color: color-mix(in srgb, var(--ui-colours-0) 80%, black); /* Use variable */
+    background-color: rgba(255, 0, 255, 0.8); 
+}
+
+#loading-progress-bar-area {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.6rem 1.2rem !important;
+    box-sizing: border-box;
+    background: var(--ui-buttons-0) !important;
+    border: 1px solid rgba(74, 85, 104, 0.3) !important; 
+    border-radius: 0.25rem !important;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.4), 0 2px 5px rgba(0,0,0,0.3) !important;
+    margin-bottom: 1rem;
+}
+
+.loading-status-text {
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 8px;
+    text-align: center;
+    color: var(--ui-texts-0);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+
+.loading-bar-wrapper {
+    width: 100%;
+    height: 14px;
+    background-color: rgba(51, 51, 51, 0.5) !important; 
+    border-radius: 7px !important;
+    overflow: hidden;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4) !important;
+}
+
+.loading-progress-bar {
+    height: 100%;
+    background-color: var(--ui-sliders-1) !important;
+    border-radius: 7px !important;
+    transition: width 0.3s ease-out;
+    width: 0%;
+    box-shadow: 0 0 5px var(--ui-sliders-1),
+                0 0 10px var(--ui-sliders-1),
+                0 0 15px var(--ui-sliders-1) !important;
+    animation: progress-pulse 2s infinite alternate !important;
+}
+
+@keyframes progress-pulse {
+    0% {
+        box-shadow: 0 0 5px var(--ui-sliders-1),
+                    0 0 10px var(--ui-sliders-1);
+    }
+    100% {
+        box-shadow: 0 0 10px var(--ui-sliders-1),
+                    0 0 20px var(--ui-sliders-1),
+                    0 0 30px var(--ui-sliders-1);
+    }
+}
+
+.server-info-panel-style {
+    background: var(--ui-backgrounds-1) !important;
+    backdrop-filter: blur(8px) saturate(1.8);
+    border: 1px solid rgba(74, 85, 104, 0.5) !important; 
+    border-radius: 0.25rem !important;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5), 0 0 10px var(--ui-colours-0) !important;
+    padding: 0.8rem !important;
+    width: 288px !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    color: var(--ui-texts-0);
+}
+
+.dynamic-info-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.info-module-item {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--ui-texts-0);
+    padding: 0.4rem 0.6rem;
+    border-radius: 0.15rem;
+    background: rgba(0,0,0,0.2) !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.info-module-welcome {
+    font-size: 1.1rem;
+    font-weight: 600;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+.info-module-welcome .panel-player-name {
+    color: var(--ui-texts-0);
+    font-weight: 700;
+}
+.info-module-welcome .panel-separator {
+    margin: 0 0.4rem;
+    color: var(--ui-texts-1);
+    font-weight: 500;
+}
+.info-module-welcome .panel-server-name {
+    color: var(--ui-colours-0);
+    font-weight: 700;
+}
+
+.info-module-player-count {
+    color: var(--ui-texts-0);
+}
+
+.info-module-custom-text {
+    color: var(--ui-texts-1);
+}
+
+.info-module-link {
+    color: var(--ui-colours-1);
+    justify-content: flex-start;
+    gap: 0.5rem;
+    text-decoration: none;
+    transition: color 0.15s ease-in-out;
+}
+.info-module-link:hover {
+    color: var(--ui-colours-0);
+    text-decoration: underline;
+}
+.info-module-link .icon {
+    width: 1.2em;
+    height: 1.2em;
+    flex-shrink: 0;
 }

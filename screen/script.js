@@ -1,7 +1,6 @@
 import { CustomSlider } from './custom-slider.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // DOM Element References
     const startButton = document.getElementById('startButton');
     const container = document.getElementById('container');
     const canvas = document.getElementById('visualizerCanvas');
@@ -55,15 +54,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     const chevronBackgroundImages = document.getElementById('chevron-background-images');
     const noBackgroundImageBtn = document.getElementById('no-background-image-btn');
     const audioPlayer = document.getElementById('audioPlayer');
+    const loadingStatusText = document.getElementById('loadingStatusText');
+    const loadingProgressBar = document.getElementById('loadingProgressBar');
+    const serverInfoPanel = document.getElementById('server-info-panel');
+    const dynamicInfoContent = document.getElementById('dynamic-info-content');
 
-    // Application State Object
     const AppState = {
         visuals: {},
         activeVisualId: null,
         activeThemeId: null,
         themes: {},
         themeColors: null,
-        eqVisualGains: [0, 0, 0, 0, 0], // Bass, Low-Mid, Mid, High-Mid, Treble
+        eqVisualGains: [0, 0, 0, 0, 0],
         volumeGain: 0.25,
         backgroundHue: 0,
         backgroundSaturation: 0,
@@ -73,33 +75,37 @@ document.addEventListener('DOMContentLoaded', async () => {
         audioFiles: [],
         currentAudioIndex: -1,
         useDesktopAudio: false,
-        isSongListOpen: false
+        isSongListOpen: false,
+        loadingText: 'Starting loading screen...',
+        loadingProgress: 0,
+        currentLogMessage: '',
+        currentLoadAction: '',
+        playerName: 'Connecting...',
+        serverName: 'Server Name',
+        playerCount: 0,
+        serverWelcomeMessage: 'Welcome to ${serverName}, ${playerName}!'
     };
 
-    // Global Variables
     let audioContext = null;
     let analyser = null;
     let fileSourceNode = null;
     let desktopSourceNode = null;
     let animationFrameId;
-    let isStarted = false;
+    let isStarted = true;
     let isPaused = false;
     let mediaStream = null;
-    let smoothedBass = 0; // For background pulsing
+    let smoothedBass = 0;
     let customVolumeSlider;
-    let customEqSliders = []; // Array to hold CustomSlider instances for EQ
+    let customEqSliders = [];
 
-    // Helper function for linear interpolation (used for smoothedBass)
     const lerp = (start, end, amt) => (1 - amt) * start + amt * end;
 
-    // Debounce function for saving settings to prevent excessive writes
     let saveTimer;
     function debounceSave() {
         clearTimeout(saveTimer);
         saveTimer = setTimeout(saveSettings, 500);
     }
 
-    // Function to save current AppState to localStorage
     function saveSettings() {
         localStorage.setItem('ts_visual_id', AppState.activeVisualId);
         localStorage.setItem('ts_theme_id', AppState.activeThemeId);
@@ -110,7 +116,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         localStorage.setItem('ts_use_desktop_audio', AppState.useDesktopAudio ? 'true' : 'false');
     }
 
-    // Function to load settings from localStorage into AppState
     function loadSettings() {
         const savedVisualId = localStorage.getItem('ts_visual_id');
         if (savedVisualId && AppState.visuals[savedVisualId]) {
@@ -162,7 +167,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Helper function to get HSL components from any CSS color string
     function getHslComponents(colorString) {
         const el = document.createElement('div');
         el.style.color = colorString;
@@ -202,7 +206,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
     }
 
-    // Applies CSS variables from a given object to the document root
     function applyCssVariables(obj, prefix = '') {
         for (const key in obj) {
             if (obj.hasOwnProperty(key)) {
@@ -213,23 +216,45 @@ document.addEventListener('DOMContentLoaded', async () => {
                     value.forEach((item, index) => {
                         if (typeof item === 'string') {
                             document.documentElement.style.setProperty(`--${prefix}${key}-${index}`, item);
+                            try {
+                                const tempDiv = document.createElement('div');
+                                tempDiv.style.color = item;
+                                document.body.appendChild(tempDiv);
+                                const computedColor = getComputedStyle(tempDiv).color;
+                                document.body.removeChild(tempDiv);
+                                const rgbMatch = computedColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d*\.?\d+))?\)/);
+                                if (rgbMatch) {
+                                    document.documentElement.style.setProperty(`--${prefix}${key}-${index}-rgb`, `${rgbMatch[1]}, ${rgbMatch[2]}, ${rgbMatch[3]}`);
+                                }
+                            } catch (e) {
+                            }
                         }
                     });
                 } else if (typeof value === 'string') {
                     document.documentElement.style.setProperty(`--${prefix}${key}`, value);
+                    try {
+                        const tempDiv = document.createElement('div');
+                        tempDiv.style.color = value;
+                        document.body.appendChild(tempDiv);
+                        const computedColor = getComputedStyle(tempDiv).color;
+                        document.body.removeChild(tempDiv);
+                        const rgbMatch = computedColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d*\.?\d+))?\)/);
+                        if (rgbMatch) {
+                            document.documentElement.style.setProperty(`--${prefix}${key}-rgb`, `${rgbMatch[1]}, ${rgbMatch[2]}, ${rgbMatch[3]}`);
+                        }
+                    } catch (e) {
+                    }
                 }
             }
         }
     }
 
-    // Loads modules and initial configuration from manifest.json
     async function loadModulesFromManifest() {
         try {
             const response = await fetch('./manifest.json');
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const manifest = await response.json();
 
-            // Initial AppState values from manifest (will be overridden by localStorage later)
             AppState.activeVisualId = manifest.activeVisualId || 'bars';
             AppState.activeThemeId = manifest.activeThemeId || 'default';
             const defaultBackgroundImageId = manifest.defaultBackgroundImageId || null;
@@ -237,7 +262,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             AppState.useDesktopAudio = manifest.useDesktopAudio || false;
             AppState.volumeGain = manifest.defaultVolume !== undefined ? parseFloat(manifest.defaultVolume) : 0.25;
 
-            // Load Visualizer Modules
             AppState.visuals = {};
             if (manifest.visuals) {
                 const visualPromises = manifest.visuals.map(async (visualConfig) => {
@@ -253,7 +277,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 await Promise.all(visualPromises);
             }
 
-            // Load Theme Modules
             AppState.themes = {};
             if (manifest.themes) {
                 const themePromises = manifest.themes.map(async (themeConfig) => {
@@ -270,7 +293,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 await Promise.all(themePromises);
             }
 
-            // Load Background Images
             AppState.backgroundImages = Array.isArray(manifest.backgroundImages)
                 ? manifest.backgroundImages.map(img => ({
                     id: img.id,
@@ -279,7 +301,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }))
                 : [];
 
-            // Load Audio Files
             AppState.audioFiles = Array.isArray(manifest.audioFiles)
                 ? manifest.audioFiles.map(audio => ({
                     id: audio.id,
@@ -288,35 +309,32 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }))
                 : [];
 
-            // Set up event listeners for audio source radio buttons (only once)
             if (sourceDesktopRadio && sourceFileRadio) {
                 sourceDesktopRadio.addEventListener('change', () => {
                     AppState.useDesktopAudio = true;
-                    stopVisualization(); // Stop and restart with new source
+                    stopVisualization();
                     saveSettings();
                 });
                 sourceFileRadio.addEventListener('change', () => {
                     AppState.useDesktopAudio = false;
-                    stopVisualization(); // Stop and restart with new source
+                    stopVisualization();
                     saveSettings();
                 });
             }
 
-            // Set default audio index if no saved state or first run
             if (!AppState.useDesktopAudio && AppState.audioFiles.length > 0) {
                 const defaultAudioIndex = AppState.audioFiles.findIndex(audio => audio.id === defaultAudioFileId);
                 if (defaultAudioIndex !== -1) {
                     AppState.currentAudioIndex = defaultAudioIndex;
                 } else {
-                    AppState.currentAudioIndex = 0; // Fallback to first song
+                    AppState.currentAudioIndex = 0;
                 }
             } else {
-                AppState.currentAudioIndex = -1; // No audio file selected for desktop audio or no files available
+                AppState.currentAudioIndex = -1;
             }
 
         } catch (error) {
             console.error("Error loading manifest:", error);
-            // Display error messages on UI if elements exist
             if (visualStyleContainer) {
                 visualStyleContainer.innerHTML = `<p class="p-2 text-sm text-red-500">Could not load visuals.</p>`;
             }
@@ -329,7 +347,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Applies the selected theme's colors to CSS variables and updates background
     async function loadAndApplyTheme(themeId) {
         const theme = AppState.themes[themeId];
         if (!theme || !theme.module) {
@@ -340,10 +357,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             AppState.themeColors = theme.module.palette;
             AppState.activeThemeId = themeId;
-
             applyCssVariables(AppState.themeColors.ui, 'ui-');
-
-            // Set base background color from the theme
             const primaryBgColor = AppState.themeColors.ui.backgrounds[0];
             const hslComponents = getHslComponents(primaryBgColor);
             AppState.backgroundHue = hslComponents.h;
@@ -352,14 +366,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             document.body.style.backgroundColor = `hsl(${AppState.backgroundHue}, ${AppState.backgroundSaturation}%, ${AppState.backgroundLightness}%)`;
 
-            // If no active background image, ensure background-image CSS property is 'none'
             if (!AppState.activeBackgroundImage) {
                 document.body.style.backgroundImage = 'none';
             }
 
-            resizeCanvas(); // Resize canvas in case theme change affects layout
+            resizeCanvas();
 
-            // Highlight the active theme button
             document.querySelectorAll('#theme-container button').forEach(btn => {
                 btn.classList.remove('theme-button-active');
             });
@@ -367,23 +379,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (activeButton) {
                 activeButton.classList.add('theme-button-active');
             }
-            saveSettings(); // Save after applying theme to persist choice
+            saveSettings();
         } catch (error) {
             console.error("Error applying theme:", error);
         }
     }
 
-    // Sets up buttons for visualizer styles
     function setupVisualizerButtons() {
         if (!visualStyleContainer) { return; }
-        visualStyleContainer.innerHTML = ''; // Clear existing buttons
+        visualStyleContainer.innerHTML = '';
         for (const id in AppState.visuals) {
             const visual = AppState.visuals[id];
             const button = document.createElement('button');
             button.id = `style-${id}`;
             button.textContent = visual.name;
             button.className = 'w-full text-left px-3 py-2 text-sm rounded-md focus:outline-none theme-button-normal theme-accordion-button';
-            if (id === AppState.activeVisualId) { // Highlight if it's the active visualizer
+            if (id === AppState.activeVisualId) {
                 button.classList.add('theme-button-active');
             }
 
@@ -399,10 +410,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Sets up buttons for themes
     function setupThemeButtons() {
         if (!themeContainer) { return; }
-        themeContainer.innerHTML = ''; // Clear existing buttons
+        themeContainer.innerHTML = '';
         for (const id in AppState.themes) {
             const theme = AppState.themes[id];
             const button = document.createElement('button');
@@ -421,7 +431,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 button.appendChild(colorSwatchContainer);
             }
 
-            if (id === AppState.activeThemeId) { // Highlight if it's the active theme
+            if (id === AppState.activeThemeId) {
                 button.classList.add('theme-button-active');
             }
             button.addEventListener('click', () => loadAndApplyTheme(id));
@@ -429,28 +439,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Sets up buttons for background images
     function setupBackgroundImageButtons() {
         if (!backgroundImageContainer || !backgroundImagesAccordionSection || !noBackgroundImageBtn) {
             console.warn("Missing background image elements (container, section, or no-image button). Skipping setup.");
             return;
         }
 
-        // Show/hide the background image section based on if images are available
         if (AppState.backgroundImages.length > 0) {
             backgroundImagesAccordionSection.classList.remove('hidden');
         } else {
             backgroundImagesAccordionSection.classList.add('hidden');
-            // If no images are available, ensure activeBackgroundImage is null and save it
             if (AppState.activeBackgroundImage !== null) {
                 AppState.activeBackgroundImage = null;
                 saveSettings();
             }
-            applyBackgroundImage(null); // Ensure no background image is displayed
+            applyBackgroundImage(null);
             return;
         }
 
-        // Clear existing buttons, but keep the 'no-background-image-btn' reference
         const existingButtons = Array.from(backgroundImageContainer.children);
         existingButtons.forEach(child => {
             if (child.id !== 'no-background-image-btn') {
@@ -458,7 +464,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
 
-        // Re-append 'no-background-image-btn' to ensure it's always at the end
         if (noBackgroundImageBtn.parentNode === backgroundImageContainer) {
             backgroundImageContainer.removeChild(noBackgroundImageBtn);
         }
@@ -469,7 +474,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             button.textContent = image.name;
             button.className = 'w-full text-left px-3 py-2 text-sm rounded-md focus:outline-none theme-button-normal theme-accordion-button';
 
-            // Highlight if this image is the active one
             if (AppState.activeBackgroundImage && AppState.activeBackgroundImage.includes(image.id)) {
                 button.classList.add('theme-button-active');
             }
@@ -480,21 +484,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         backgroundImageContainer.appendChild(noBackgroundImageBtn);
 
-        // Highlight "No Background Image" button if no image is active
         if (!AppState.activeBackgroundImage || AppState.activeBackgroundImage === 'none') {
             noBackgroundImageBtn.classList.add('theme-button-active');
         } else {
             noBackgroundImageBtn.classList.remove('theme-button-active');
         }
-        // Ensure its event listener is active (it should be persistent from initial setup)
         noBackgroundImageBtn.addEventListener('click', () => applyBackgroundImage(null));
     }
 
-    // Applies the chosen background image or removes it
     function applyBackgroundImage(imageUrl) {
         AppState.activeBackgroundImage = imageUrl;
 
-        // Remove active class from all background image buttons first
         document.querySelectorAll('#background-image-container button').forEach(btn => {
             btn.classList.remove('theme-button-active');
         });
@@ -505,8 +505,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.body.style.backgroundPosition = 'center';
             document.body.style.backgroundRepeat = 'no-repeat';
 
-            // Set background color to theme's base color when image is present
-            // This prevents the pulsating effect from interfering with the image
             if (AppState.themeColors) {
                 const primaryBgColor = AppState.themeColors.ui.backgrounds[0];
                 const hslComponents = getHslComponents(primaryBgColor);
@@ -516,7 +514,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.body.style.backgroundColor = `hsl(${AppState.backgroundHue}, ${AppState.backgroundSaturation}%, ${AppState.backgroundLightness}%)`;
             }
 
-            // Highlight the corresponding background image button
             const imgFileName = imageUrl.substring(imageUrl.lastIndexOf('/') + 1);
             const imageId = imgFileName.substring(0, imgFileName.lastIndexOf('.'));
             const activeButton = document.getElementById(`bg-image-${imageId}`);
@@ -526,7 +523,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         } else {
             document.body.style.backgroundImage = 'none';
-            // When no background image, apply theme's base background color to allow pulsating
             if (AppState.themeColors) {
                 const primaryBgColor = AppState.themeColors.ui.backgrounds[0];
                 const hslComponents = getHslComponents(primaryBgColor);
@@ -535,38 +531,33 @@ document.addEventListener('DOMContentLoaded', async () => {
                 AppState.backgroundLightness = hslComponents.l;
                 document.body.style.backgroundColor = `hsl(${AppState.backgroundHue}, ${AppState.backgroundSaturation}%, ${AppState.backgroundLightness}%)`;
             } else {
-                document.body.style.backgroundColor = ''; // Fallback if theme not loaded yet
+                document.body.style.backgroundColor = '';
             }
 
-            // Highlight "No Background Image" button
             if (noBackgroundImageBtn) {
                 noBackgroundImageBtn.classList.add('theme-button-active');
             }
         }
-        saveSettings(); // Save the new background image choice
+        saveSettings();
     }
 
-    // Initializes Web Audio API Context and Analyser
     async function initializeAudioGraph() {
         if (!audioContext) {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
             analyser = audioContext.createAnalyser();
-            analyser.smoothingTimeConstant = 0.5; // Smooths out sudden changes
+            analyser.smoothingTimeConstant = 0.5;
         }
         if (!fileSourceNode) {
             fileSourceNode = audioContext.createMediaElementSource(audioPlayer);
         }
     }
 
-    // Starts the audio source (file or desktop)
     async function startAudioSource(type) {
-        await initializeAudioGraph(); // Ensure audio graph is ready
+        await initializeAudioGraph();
 
-        // Disconnect previous sources
         if (fileSourceNode) { try { fileSourceNode.disconnect(analyser); } catch (e) { console.warn("Error disconnecting fileSourceNode:", e); } }
         if (desktopSourceNode) { try { desktopSourceNode.disconnect(analyser); } catch (e) { console.warn("Error disconnecting desktopSourceNode:", e); } }
 
-        // Disconnect analyser from destination if connected
         if (analyser && analyser.context && analyser.context.destination && analyser.context.state !== 'closed') {
             try {
                 analyser.disconnect(analyser.context.destination);
@@ -575,7 +566,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        // Stop existing media stream tracks if any
         if (mediaStream) {
             mediaStream.getTracks().forEach(track => track.stop());
             mediaStream = null;
@@ -592,7 +582,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             fileSourceNode.connect(analyser);
             analyser.connect(audioContext.destination);
             audioPlayer.loop = false;
-            audioPlayer.volume = AppState.volumeGain; // Set volume from AppState
+            audioPlayer.volume = AppState.volumeGain;
             audioPlayer.play().catch(e => {
                 console.warn("Autoplay blocked for audio file:", e);
                 if (messageElement) messageElement.textContent = "Audio blocked. Click anywhere to start music.";
@@ -615,23 +605,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         } else if (type === 'desktop') {
             try {
-                audioPlayer.pause(); // Pause file audio player
+                audioPlayer.pause();
                 audioPlayer.currentTime = 0;
-                audioPlayer.volume = 0; // Mute audio player if using desktop audio
+                audioPlayer.volume = 0;
 
                 mediaStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
                 if (mediaStream.getAudioTracks().length === 0) {
                     if (messageElement) messageElement.textContent = 'Audio not shared. Please try again and check the "Share audio" box.';
-                    mediaStream.getVideoTracks().forEach(track => track.stop()); // Stop video track if no audio
+                    mediaStream.getVideoTracks().forEach(track => track.stop());
                     console.warn("Desktop audio not shared.");
                     return;
                 }
                 desktopSourceNode = audioContext.createMediaStreamSource(mediaStream);
                 desktopSourceNode.connect(analyser);
-                analyser.connect(audioContext.destination); // Connect analyser to speakers for desktop audio
+                analyser.connect(audioContext.destination);
                 isPaused = false;
                 updateCurrentSongDisplay('Desktop Audio');
-                if (prevButton) prevButton.disabled = true; // Disable prev/next for desktop
+                if (prevButton) prevButton.disabled = true;
                 if (nextButton) nextButton.disabled = true;
 
             } catch (err) {
@@ -641,39 +631,33 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        // Resume audio context if suspended (e.g., after user interaction)
         if (audioContext && audioContext.state === 'suspended') {
             await audioContext.resume();
         }
 
-        // If visualization is already started, ensure controls and canvas are ready
         if (isStarted) {
             if (messageElement) messageElement.textContent = '';
             showActiveControls();
             resizeCanvas();
-            draw(); // Start drawing loop
+            draw();
         }
 
-        // Update play/pause icons
         if (playIcon) playIcon.classList.add('hidden');
         if (pauseIcon) pauseIcon.classList.remove('hidden');
     }
 
-    // Plays the next audio file in the list
     function playNextAudio() {
         if (AppState.useDesktopAudio || AppState.audioFiles.length === 0) return;
         let newIndex = (AppState.currentAudioIndex + 1) % AppState.audioFiles.length;
         selectSong(newIndex);
     }
 
-    // Plays the previous audio file in the list
     function playPrevAudio() {
         if (AppState.useDesktopAudio || AppState.audioFiles.length === 0) return;
         let newIndex = (AppState.currentAudioIndex - 1 + AppState.audioFiles.length) % AppState.audioFiles.length;
         selectSong(newIndex);
     }
 
-    // Updates the display showing the current song name
     function updateCurrentSongDisplay(displayText = null) {
         if (currentSongTextSpan) {
             if (displayText) {
@@ -686,24 +670,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Shows the active controls and hides start controls
     function showActiveControls() {
         if (startControls) startControls.classList.add('hidden');
         if (activeControls) {
             activeControls.classList.remove('hidden');
             activeControls.classList.add('flex');
-            // Update position of volume slider after controls become visible
             if (customVolumeSlider) {
                 customVolumeSlider.updatePosition();
             }
-            // Update position of EQ sliders if visible
             customEqSliders.forEach(slider => {
-                if(slider) slider.updatePosition();
+                if (slider) slider.updatePosition();
             });
         }
     }
 
-    // Shows the start controls and hides active controls
     function showStartControls() {
         if (activeControls) {
             activeControls.classList.add('hidden');
@@ -712,12 +692,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (startControls) {
             startControls.classList.remove('hidden');
         }
-        closeEqMenu(); // Ensure EQ menu is closed
-        closeSideMenu(); // Ensure settings menu is closed
+        closeEqMenu();
+        closeSideMenu();
         console.warn("showStartControls() called. This might indicate an audio setup issue, but visualizer should still try to run.");
     }
 
-    // Toggles the visibility of the settings menu
     function toggleSettingsMenu() {
         if (!settingsMenu || !settingsToggleBtn || !settingsIconGear || !settingsIconX) return;
         const isHidden = settingsMenu.classList.contains('invisible');
@@ -728,7 +707,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             settingsToggleBtn.classList.add('theme-button-active', 'rotate-90');
             settingsIconGear.classList.add('opacity-0');
             settingsIconX.classList.remove('opacity-0');
-            closeEqMenu(); // Close EQ menu when settings open
+            closeEqMenu();
         } else {
             settingsMenu.classList.add('invisible', 'opacity-0', 'scale-95');
             settingsMenu.classList.remove('visible', 'opacity-100', 'scale-100');
@@ -736,7 +715,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             settingsIconGear.classList.remove('opacity-0');
             settingsIconX.classList.add('opacity-0');
 
-            // Close all accordions within the settings menu when it closes
             const accordionsToClose = [
                 { container: visualStyleContainer, chevron: chevronVisuals },
                 { container: themeContainer, chevron: chevronThemes },
@@ -752,7 +730,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Closes the settings menu if it's open
     function closeSideMenu() {
         if (settingsMenu && !settingsMenu.classList.contains('invisible')) {
             settingsMenu.classList.add('invisible', 'opacity-0', 'scale-95');
@@ -763,7 +740,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Toggles the visibility of the EQ panel
     function toggleEqPanel() {
         const eqIconNormal = document.getElementById('eq-icon-normal');
         const eqIconX = document.getElementById('eq-icon-x');
@@ -775,27 +751,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (isHidden) {
             eqMenu.classList.remove('invisible', 'opacity-0', 'scale-95');
             eqMenu.classList.add('visible', 'opacity-100', 'scale-100');
-            eqToggleBtn.classList.add('theme-button-active', 'rotate-90'); // Add rotation for active state
+            eqToggleBtn.classList.add('theme-button-active', 'rotate-90');
 
             eqIconNormal.classList.add('opacity-0');
             eqIconX.classList.remove('opacity-0');
-            closeSideMenu(); // Close settings menu when EQ opens
-            // Update EQ slider positions in case they weren't visible before
+            closeSideMenu();
             customEqSliders.forEach(slider => {
-                if(slider) slider.updatePosition();
+                if (slider) slider.updatePosition();
             });
         } else {
             eqMenu.classList.add('invisible', 'opacity-0', 'scale-95');
             eqMenu.classList.remove('visible', 'opacity-100', 'scale-100');
 
-            eqToggleBtn.classList.remove('theme-button-active', 'rotate-90'); // Remove rotation
+            eqToggleBtn.classList.remove('theme-button-active', 'rotate-90');
 
             eqIconNormal.classList.remove('opacity-0');
             eqIconX.classList.add('opacity-0');
         }
     }
 
-    // Closes the EQ menu if it's open
     function closeEqMenu() {
         const eqIconNormal = document.getElementById('eq-icon-normal');
         const eqIconX = document.getElementById('eq-icon-x');
@@ -805,14 +779,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             eqMenu.classList.remove('visible', 'opacity-100', 'scale-100');
 
             if (eqToggleBtn) {
-                eqToggleBtn.classList.remove('theme-button-active', 'rotate-90'); // Ensure rotation is removed
+                eqToggleBtn.classList.remove('theme-button-active', 'rotate-90');
                 if (eqIconNormal) eqIconNormal.classList.remove('opacity-0');
                 if (eqIconX) eqIconX.classList.add('opacity-0');
             }
         }
     }
 
-    // Toggles accordion sections in the settings menu
     function toggleAccordion(clickedButton, contentContainer, chevronIcon) {
         const allAccordionButtons = [
             accordionVisualsBtn,
@@ -834,18 +807,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const clickedIndex = allAccordionButtons.indexOf(clickedButton);
 
-        if (clickedIndex === -1) return; // Should not happen if button exists
+        if (clickedIndex === -1) return;
 
         allContentContainers.forEach((container, index) => {
             const chevron = allChevronIcons[index];
 
             if (container && chevron && allAccordionButtons[index]) {
                 if (index === clickedIndex) {
-                    // Toggle the clicked accordion
                     container.classList.toggle('hidden');
                     chevron.classList.toggle('rotate-180');
                 } else {
-                    // Close other accordions
                     container.classList.add('hidden');
                     chevron.classList.remove('rotate-180');
                 }
@@ -853,7 +824,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Main drawing loop for the visualizer
     async function draw() {
         if (!isStarted || isPaused) return;
         animationFrameId = requestAnimationFrame(draw);
@@ -864,7 +834,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        if (!AppState.themeColors) { // Ensure theme colors are loaded before drawing
+        if (!AppState.themeColors) {
             canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
             return;
         }
@@ -877,88 +847,74 @@ document.addEventListener('DOMContentLoaded', async () => {
         const freqDataArrayRaw = new Uint8Array(analyser.frequencyBinCount);
         analyser.getByteFrequencyData(freqDataArrayRaw);
 
-        // Apply global volume gain to raw frequency data
         const freqDataTempVol = new Uint8Array(analyser.frequencyBinCount);
         for (let i = 0; i < analyser.frequencyBinCount; i++) {
             freqDataTempVol[i] = Math.max(0, Math.min(255, freqDataArrayRaw[i] * AppState.volumeGain));
         }
 
-        // Apply EQ visual gains to frequency data
         const freqDataArrayVisual = new Uint8Array(analyser.frequencyBinCount);
-        // Define frequency ranges for EQ sliders (rough approximations)
         const eqFrequenciesMapping = [
-            { start: 0, end: 10, sliderIndex: 0 }, // Bass (approx 0-200 Hz)
-            { start: 10, end: 30, sliderIndex: 1 }, // Low-Mid (approx 200-500 Hz)
-            { start: 30, end: 80, sliderIndex: 2 }, // Mid (approx 500-2000 Hz)
-            { start: 80, end: 150, sliderIndex: 3 }, // High-Mid (approx 2000-5000 Hz)
-            { start: 150, end: analyser.frequencyBinCount - 1, sliderIndex: 4 } // Treble (approx 5000 Hz+)
+            { start: 0, end: 10, sliderIndex: 0 },
+            { start: 10, end: 30, sliderIndex: 1 },
+            { start: 30, end: 80, sliderIndex: 2 },
+            { start: 80, end: 150, sliderIndex: 3 },
+            { start: 150, end: analyser.frequencyBinCount - 1, sliderIndex: 4 }
         ];
 
         for (let i = 0; i < analyser.frequencyBinCount; i++) {
             let gainFactor = 1.0;
 
             for (const mapping of eqFrequenciesMapping) {
-                // Corrected condition for frequency range: i should be >= start and <= end
                 if (i >= mapping.start && i <= mapping.end) {
                     const eqGain = AppState.eqVisualGains[mapping.sliderIndex];
-                    gainFactor = Math.pow(10, eqGain / 20); // Convert dB gain to linear factor
+                    gainFactor = Math.pow(10, eqGain / 20);
                     break;
                 }
             }
             freqDataArrayVisual[i] = Math.max(0, Math.min(255, freqDataTempVol[i] * gainFactor));
         }
 
-        // Calculate smoothed bass for background pulsating effect
-        const bassFrequencies = freqDataArrayVisual.slice(0, 10); // Take first 10 bins for bass
+        const bassFrequencies = freqDataArrayVisual.slice(0, 10);
         const averageBass = bassFrequencies.reduce((a, b) => a + b, 0) / bassFrequencies.length;
-        const normalizedBass = isNaN(averageBass) ? 0 : averageBass / 255; // Normalize to 0-1
-        smoothedBass = lerp(smoothedBass, normalizedBass, 0.3); // Smooth over time
+        const normalizedBass = isNaN(averageBass) ? 0 : averageBass / 255;
+        smoothedBass = lerp(smoothedBass, normalizedBass, 0.3);
 
-        // Apply pulsating background color if no background image is active
         if (!AppState.activeBackgroundImage) {
-            const pulseMagnitude = 100; // Max percentage increase in lightness
-            const baseLightness = AppState.backgroundLightness; // Base lightness from theme
+            const pulseMagnitude = 100;
+            const baseLightness = AppState.backgroundLightness;
 
-            // Calculate current lightness based on smoothed bass
             const currentLightness = baseLightness + (smoothedBass * (100 - baseLightness) * (pulseMagnitude / 100));
 
             document.body.style.backgroundColor = `hsl(${AppState.backgroundHue}, ${AppState.backgroundSaturation}%, ${Math.min(100, Math.max(0, currentLightness))}%)`;
         } else {
-            // When an image is present, maintain theme's base background color
             document.body.style.backgroundColor = `hsl(${AppState.backgroundHue}, ${AppState.backgroundSaturation}%, ${AppState.backgroundLightness}%)`;
         }
 
-        canvasCtx.save(); // Save canvas state before transformations
+        canvasCtx.save();
 
-        // Define a logical drawing resolution
         const logicalDrawingWidth = 960;
         const logicalDrawingHeight = 540;
 
-        // Calculate scale factors to fit canvas content to actual canvas dimensions
         const scaleX = canvas.clientWidth / logicalDrawingWidth;
         const scaleY = canvas.clientHeight / logicalDrawingHeight;
-        const contentScale = Math.min(scaleX, scaleY); // Use min scale to fit content within view
+        const contentScale = Math.min(scaleX, scaleY);
 
-        // Apply scaling for high-DPI displays and content scaling
         canvasCtx.scale(window.devicePixelRatio * contentScale, window.devicePixelRatio * contentScale);
 
         try {
-            canvasCtx.clearRect(0, 0, logicalDrawingWidth, logicalDrawingHeight); // Clear canvas
+            canvasCtx.clearRect(0, 0, logicalDrawingWidth, logicalDrawingHeight);
 
-            // Dynamically import visualizer module if not already loaded (should be loaded by now)
             if (!visual.module) {
                 visual.module = await import(visual.path);
             }
-            // Call the draw method of the active visualizer module
             visual.module.draw(canvasCtx, freqDataArrayVisual, smoothedBass, analyser, AppState.themeColors, logicalDrawingWidth, logicalDrawingHeight);
         } catch (error) {
             console.error("Error drawing visualizer:", error);
         } finally {
-            canvasCtx.restore(); // Restore canvas state
+            canvasCtx.restore();
         }
     }
 
-    // Resizes the canvas to fit its container and resets visualizer if needed
     function resizeCanvas() {
         if (!canvas) return;
         const canvasWrapper = document.getElementById('canvas-aspect-ratio-container');
@@ -967,7 +923,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         canvas.width = canvasWrapper.clientWidth * window.devicePixelRatio;
         canvas.height = canvasWrapper.clientHeight * window.devicePixelRatio;
 
-        // Call reset on active visualizer module if it has a reset method
         for (const id in AppState.visuals) {
             const visual = AppState.visuals[id];
             if (visual.module && typeof visual.module.reset === 'function') {
@@ -976,18 +931,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Stops the visualization and resets UI elements
     function stopVisualization() {
-        if (animationFrameId) cancelAnimationFrame(animationFrameId); // Stop animation loop
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
         if (audioPlayer) {
             audioPlayer.pause();
             audioPlayer.currentTime = 0;
         }
-        // Disconnect audio nodes
         if (fileSourceNode) { try { fileSourceNode.disconnect(analyser); } catch (e) { } }
         if (desktopSourceNode) {
             try { desktopSourceNode.disconnect(analyser); } catch (e) { }
-            if (mediaStream) { // Stop desktop media stream tracks
+            if (mediaStream) {
                 mediaStream.getTracks().forEach(track => track.stop());
                 mediaStream = null;
             }
@@ -999,39 +952,35 @@ document.addEventListener('DOMContentLoaded', async () => {
             } catch (e) { }
         }
         if (audioContext && audioContext.state === 'running') {
-            audioContext.suspend(); // Suspend audio context
+            audioContext.suspend();
         }
 
         isStarted = false;
         isPaused = false;
         smoothedBass = 0;
-        AppState.eqVisualGains = [0, 0, 0, 0, 0]; // Reset EQ gains
+        AppState.eqVisualGains = [0, 0, 0, 0, 0];
 
-        // Reset UI elements to default appearance
         if (customVolumeSlider) {
-            customVolumeSlider.updateValue(AppState.volumeGain); // Revert to AppState's volume
+            customVolumeSlider.updateValue(AppState.volumeGain);
         }
         customEqSliders.forEach((slider, i) => {
             if (slider) {
-                slider.updateValue(0); // Reset EQ sliders to 0
+                slider.updateValue(0);
             }
         });
 
-        showStartControls(); // Show initial start screen
-        // Reset background to theme's base color and remove image
+        showStartControls();
         document.body.style.backgroundColor = `hsl(${AppState.backgroundHue}, ${AppState.backgroundSaturation}%, ${AppState.backgroundLightness}%)`;
         document.body.style.backgroundImage = 'none';
-        if (container) container.style.transform = ''; // Reset any container transformations
+        if (container) container.style.transform = '';
 
-        // Update play/pause icons
         if (playIcon) playIcon.classList.add('hidden');
         if (pauseIcon) pauseIcon.classList.remove('hidden');
 
-        if (canvasCtx) canvasCtx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
-        updateCurrentSongDisplay(); // Reset song display
+        if (canvasCtx) canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+        updateCurrentSongDisplay();
     }
 
-    // Toggles audio pause/play
     function togglePause() {
         if (!isStarted) return;
         isPaused = !isPaused;
@@ -1046,38 +995,35 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (audioContext && audioContext.state === 'suspended') {
                 audioContext.resume();
             }
-            if (!AppState.useDesktopAudio) { // Only play audio player if not desktop audio
+            if (!AppState.useDesktopAudio) {
                 audioPlayer.play().catch(e => console.error("Error resuming audio:", e));
             }
-            draw(); // Resume drawing
+            draw();
         }
     }
 
-    // Applies a preset EQ configuration
     function applyEqPreset(gains) {
-        if (!isStarted) return; // Only apply if visualizer is running
-        AppState.eqVisualGains = [...gains]; // Update AppState
+        if (!isStarted) return;
+        AppState.eqVisualGains = [...gains];
         customEqSliders.forEach((slider, i) => {
             if (slider) {
-                slider.updateValue(gains[i]); // Update slider UI
+                slider.updateValue(gains[i]);
             }
         });
     }
 
-    // Selects a song by index and starts playing it
     function selectSong(index) {
         if (index < 0 || index >= AppState.audioFiles.length) return;
         AppState.currentAudioIndex = index;
-        startAudioSource('file'); // Start playing the selected file
-        renderSongList(); // Re-render song list to highlight active song
-        saveSettings(); // Save current song index
+        startAudioSource('file');
+        renderSongList();
+        saveSettings();
     }
 
-    // Renders the list of audio files in the song list panel
     function renderSongList() {
         if (!songListContainer) return;
 
-        songListContainer.innerHTML = ''; // Clear previous list
+        songListContainer.innerHTML = '';
         if (AppState.audioFiles.length === 0) {
             songListContainer.innerHTML = '<p class="text-center text-xs text-gray-400 p-2">No songs loaded.</p>';
             return;
@@ -1092,13 +1038,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             songButton.addEventListener('click', () => {
                 selectSong(index);
-                toggleSongList(); // Close song list after selection
+                toggleSongList();
             });
             songListContainer.appendChild(songButton);
         });
     }
 
-    // Toggles the visibility of the song list panel
     function toggleSongList() {
         if (!songListContainer || !currentSongDisplayButton || !songChevron) return;
 
@@ -1106,9 +1051,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (AppState.isSongListOpen) {
             songListContainer.classList.remove('hidden');
-            currentSongDisplayButton.classList.add('active'); // Highlight song display button
-            songChevron.classList.add('rotate-180'); // Rotate chevron
-            renderSongList(); // Ensure song list is up-to-date when opened
+            currentSongDisplayButton.classList.add('active');
+            songChevron.classList.add('rotate-180');
+            renderSongList();
         } else {
             songListContainer.classList.add('hidden');
             currentSongDisplayButton.classList.remove('active');
@@ -1116,29 +1061,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-
-    // --- Event Listeners Setup ---
-
-    // Pause/Play button
     pauseButton.addEventListener('click', togglePause);
 
-    // Previous/Next song buttons
     if (prevButton) {
         prevButton.addEventListener('click', () => {
             if (!AppState.useDesktopAudio) playPrevAudio();
         });
-        // Disable initially if desktop audio is selected
         prevButton.disabled = AppState.useDesktopAudio;
     }
     if (nextButton) {
         nextButton.addEventListener('click', () => {
             if (!AppState.useDesktopAudio) playNextAudio();
         });
-        // Disable initially if desktop audio is selected
         nextButton.disabled = AppState.useDesktopAudio;
     }
 
-    // Handle audio player song ending
     if (audioPlayer) {
         audioPlayer.onended = () => {
             if (!AppState.useDesktopAudio) {
@@ -1147,20 +1084,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
     }
 
-    // EQ Toggle and Reset buttons
     eqToggleBtn.addEventListener('click', toggleEqPanel);
     eqResetBtn.addEventListener('click', () => {
-        applyEqPreset([0, 0, 0, 0, 0]); // Reset EQ to flat
+        applyEqPreset([0, 0, 0, 0, 0]);
         saveSettings();
     });
 
-    // Settings Menu Toggle
     settingsToggleBtn.addEventListener('click', toggleSettingsMenu);
 
-    // Current Song Display (for toggling song list)
     currentSongDisplayButton.addEventListener('click', toggleSongList);
 
-    // Accordion Buttons for settings panels
     if (accordionVisualsBtn) {
         accordionVisualsBtn.addEventListener('click', () => {
             toggleAccordion(accordionVisualsBtn, visualStyleContainer, chevronVisuals);
@@ -1178,12 +1111,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
 
-    // --- Core Application Initialization Sequence ---
-
-    // 1. Initialize audio graph (creates audio context, analyser, etc.)
     initializeAudioGraph();
 
-    // 2. Create CustomSlider instances (they will read initial values from HTML but won't be synced with localStorage yet)
     if (volumeSliderWrapper && volumeSliderHiddenInput) {
         customVolumeSlider = new CustomSlider(
             'volume-slider-wrapper',
@@ -1193,7 +1122,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (!AppState.useDesktopAudio && audioPlayer) {
                     audioPlayer.volume = newValue;
                 }
-                debounceSave(); // Save setting after change
+                debounceSave();
             }
         );
     }
@@ -1221,115 +1150,267 @@ document.addEventListener('DOMContentLoaded', async () => {
                 hiddenInput.id,
                 (newValue) => {
                     AppState.eqVisualGains[i] = newValue;
-                    debounceSave(); // Save setting after change
+                    debounceSave();
                 }
             );
             customEqSliders.push(slider);
         }
     });
 
-    // 3. Load modules from manifest.json. This populates `AppState` with available options and manifest defaults.
     await loadModulesFromManifest();
-
-    // 4. Load saved settings from localStorage. This *overwrites* the manifest defaults in `AppState`
-    // with any user-persisted preferences.
     loadSettings();
 
-    // 5. NOW, update ALL UI elements to reflect the final `AppState` values.
-    // This is the crucial step to ensure the UI matches the loaded settings.
-
-    // Update Volume Slider UI
     if (customVolumeSlider) {
-        customVolumeSlider.updateValue(AppState.volumeGain); // Explicitly set slider position
+        customVolumeSlider.updateValue(AppState.volumeGain);
         if (!AppState.useDesktopAudio && audioPlayer) {
-            audioPlayer.volume = AppState.volumeGain; // Set actual audio player volume
+            audioPlayer.volume = AppState.volumeGain;
         } else if (AppState.useDesktopAudio && audioPlayer) {
-            audioPlayer.volume = 0; // Mute if desktop audio is selected
+            audioPlayer.volume = 0;
         }
     }
 
-    // Update EQ Sliders UI
     customEqSliders.forEach((slider, i) => {
         if (slider && i < AppState.eqVisualGains.length) {
-            slider.updateValue(AppState.eqVisualGains[i]); // Explicitly set slider position for each EQ band
+            slider.updateValue(AppState.eqVisualGains[i]);
         }
     });
-
-    // Update Visualizer Selection UI (buttons and active state)
     setupVisualizerButtons();
-
-    // Update Theme Selection UI and apply CSS variables (buttons and background color)
     await loadAndApplyTheme(AppState.activeThemeId);
-    setupThemeButtons(); // Re-render/re-highlight theme buttons
-
-    // Update Background Image UI (buttons, actual background image)
+    setupThemeButtons();
     setupBackgroundImageButtons();
     applyBackgroundImage(AppState.activeBackgroundImage);
 
-    // Update Audio Source Radio Buttons state
     if (sourceDesktopRadio && sourceFileRadio) {
         sourceDesktopRadio.checked = AppState.useDesktopAudio;
         sourceFileRadio.checked = !AppState.useDesktopAudio;
-        // Also update the disabled state of prev/next buttons
         if (prevButton) prevButton.disabled = AppState.useDesktopAudio;
         if (nextButton) nextButton.disabled = AppState.useDesktopAudio;
     }
 
-    // Update Current Song Display and render song list
     updateCurrentSongDisplay();
     renderSongList();
 
+    if (loadingStatusText) loadingStatusText.textContent = AppState.loadingText;
+    if (loadingProgressBar) loadingProgressBar.style.width = `${AppState.loadingProgress}%`;
 
-    // 6. Final setup and start visualization
-    if (startControls) {
-        startControls.classList.add('hidden'); // Hide the start screen
-    }
+    setTimeout(() => {
+        if (window.nuiHandoverData) {
+            const handoverData = window.nuiHandoverData;
 
-    isStarted = true;
-    showActiveControls(); // Show active controls (volume, EQ, etc.)
-    resizeCanvas(); // Ensure canvas is correctly sized
+            if (handoverData.vars) {
+                AppState.playerName = handoverData.vars.playerName || 'Player';
+                AppState.serverName = handoverData.vars.serverName || 'My Server';
+                AppState.playerCount = handoverData.vars.playerCount || 0;
+            }
+            if (handoverData.config && handoverData.config.serverMessage) {
+                AppState.serverWelcomeMessage = handoverData.config.serverMessage;
+            }
 
-    // Determine initial audio source and start visualization
+            if (handoverData.config && handoverData.config.serverInfoModules) {
+                renderServerInfoPanel(handoverData.config.serverInfoModules);
+            } else {
+                console.warn("window.nuiHandoverData.config.serverInfoModules is missing or empty. Rendering default welcome and player count modules.");
+                renderServerInfoPanel([
+                    { type: 'welcome', enabled: true, order: 10, panelMessageTemplate: AppState.serverWelcomeMessage },
+                    { type: 'playerCount', enabled: true, order: 20, prefix: 'Players: ' }
+                ]);
+            }
+
+        } else {
+            console.warn("window.nuiHandoverData is not available after timeout. Server info panel will use default placeholders.");
+            renderServerInfoPanel([
+                { type: 'welcome', enabled: true, order: 10, panelMessageTemplate: AppState.serverWelcomeMessage },
+                { type: 'playerCount', enabled: true, order: 20, prefix: 'Players: ' }
+            ]);
+        }
+    }, 100);
+
+    showActiveControls();
+    resizeCanvas();
+
     const audioSourceType = AppState.useDesktopAudio ? 'desktop' : 'file';
 
     if (audioSourceType === 'file') {
         if (AppState.audioFiles.length === 0 || AppState.currentAudioIndex === -1) {
             if (messageElement) messageElement.textContent = "No audio files configured. Visualizer running without audio input.";
             console.warn("No audio files configured or default index invalid. Visualizer will run without direct audio input from files.");
-            draw(); // Start drawing loop even without audio input
+            draw();
         } else {
-            await startAudioSource(audioSourceType); // Start audio and drawing
+            await startAudioSource(audioSourceType);
         }
     } else if (audioSourceType === 'desktop') {
-        await startAudioSource(audioSourceType); // Request desktop audio and start drawing
+        await startAudioSource(audioSourceType);
     } else {
         if (messageElement) messageElement.textContent = "No audio source configured. Visualizer running without audio.";
         console.warn("No audio source type configured. Visualizer will run without audio input.");
-        draw(); // Fallback to drawing without audio if source is undefined
+        draw();
     }
 
-    // Native bridge for FiveM/similar environments
     if (window.invokeNative) {
         window.invokeNative('ready');
+    } else {
+        console.warn("window.invokeNative is not defined. Running in browser development mode.");
     }
 
-    // Global event listeners for responsiveness and messages
-    window.addEventListener('resize', () => {
-        resizeCanvas(); // Recalculate canvas size on window resize
-    });
-    window.addEventListener('focus', () => {
-        resizeCanvas(); // Recalculate canvas size on window focus (useful if tabbed away)
-    });
-
-    resizeCanvas(); // Initial resize on load
-
-    // Listener for messages from external environments (e.g., FiveM)
     window.addEventListener('message', (event) => {
         const data = event.data;
-        if (data.eventName === 'setLoadingText') {
-            // Handle loading text update
-        } else if (data.eventName === 'setLoadingProgress') {
-            // Handle loading progress update
+
+        switch (data.eventName) {
+            case 'onLogLine':
+                AppState.currentLogMessage = data.message;
+                AppState.loadingText = `${data.message} ${AppState.loadingProgress > 0 ? '(' + AppState.loadingProgress + '%)' : ''}`;
+                if (loadingStatusText) {
+                    loadingStatusText.textContent = AppState.loadingText;
+                }
+                break;
+
+            case 'loadProgress':
+                AppState.loadingProgress = Math.max(0, Math.min(100, Math.round(data.loadFraction * 100)));
+                if (loadingProgressBar) {
+                    loadingProgressBar.style.width = `${AppState.loadingProgress}%`;
+                }
+                if (loadingStatusText) {
+                    loadingStatusText.textContent = `${AppState.currentLogMessage || 'Loading...'} (${AppState.loadingProgress}%)`;
+                }
+                break;
+
+            case 'startDataFileEntries':
+                AppState.currentLoadAction = `Loading ${data.count} data file entries...`;
+                AppState.loadingText = AppState.currentLoadAction;
+                if (loadingStatusText) loadingStatusText.textContent = AppState.loadingText;
+                break;
+
+            case 'onDataFileEntry':
+                AppState.currentLoadAction = `Processing file: ${data.name}`;
+                break;
+
+            case 'performMapLoadFunction':
+                AppState.currentLoadAction = `Performing map load function ${data.idx}...`;
+                AppState.loadingText = AppState.currentLoadAction;
+                if (loadingStatusText) loadingStatusText.textContent = AppState.loadingText;
+                break;
+
+            case 'endDataFileEntries':
+                AppState.currentLoadAction = `Finished data file entries.`;
+                AppState.loadingText = AppState.currentLoadAction;
+                if (loadingStatusText) loadingStatusText.textContent = AppState.loadingText;
+                break;
+
+            case 'startInitFunction':
+            case 'startInitFunctionOrder':
+                AppState.currentLoadAction = `Starting initialization phase: ${data.type}`;
+                if (data.order && data.count) {
+                    AppState.currentLoadAction += ` (${data.order}/${data.count})`;
+                }
+                AppState.loadingText = AppState.currentLoadAction;
+                if (loadingStatusText) loadingStatusText.textContent = AppState.loadingText;
+                break;
+
+            case 'initFunctionInvoking':
+                AppState.currentLoadAction = `Invoking: ${data.name} (${data.idx + 1}/${data.count})`;
+                AppState.loadingText = AppState.currentLoadAction;
+                if (loadingStatusText) loadingStatusText.textContent = AppState.loadingText;
+                break;
+
+            case 'initFunctionInvoked':
+                AppState.currentLoadAction = `Finished: ${data.name}`;
+                break;
+            case 'endInitFunction':
+                if (data.message) {
+                    AppState.currentLogMessage = data.message;
+                } else if (data.name && data.type) {
+                    AppState.currentLogMessage = `${data.type}: ${data.name}`;
+                } else {
+                    AppState.currentLogMessage = data.eventName;
+                }
+                AppState.loadingText = `${AppState.currentLogMessage} (${AppState.loadingProgress}%)`;
+                if (loadingStatusText) {
+                    loadingStatusText.textContent = AppState.loadingText;
+                }
+                break;
+
+            case 'updatePlayerCount':
+                AppState.playerCount = data.playerCount;
+                if (window.nuiHandoverData && window.nuiHandoverData.config && window.nuiHandoverData.config.serverInfoModules) {
+                    renderServerInfoPanel(window.nuiHandoverData.config.serverInfoModules);
+                }
+                break;
+
+            default:
+                break;
         }
     });
+
+    function renderServerInfoPanel(modulesConfig) {
+        if (!dynamicInfoContent) {
+            console.error("renderServerInfoPanel: dynamicInfoContent element not found!");
+            return;
+        }
+
+        dynamicInfoContent.innerHTML = '';
+
+        const sortedModules = [...modulesConfig].sort((a, b) => (a.order || 999) - (b.order || 999));
+
+        sortedModules.forEach(module => {
+            if (!module.enabled) return;
+
+            let element;
+            switch (module.type) {
+                case 'welcome':
+                    element = document.createElement('div');
+                    element.classList.add('info-module-item', 'info-module-welcome');
+
+                    const playerNameSpan = document.createElement('span');
+                    playerNameSpan.classList.add('panel-player-name');
+                    playerNameSpan.textContent = AppState.playerName;
+
+                    const separatorSpan = document.createElement('span');
+                    separatorSpan.classList.add('panel-separator');
+                    separatorSpan.textContent = '/';
+
+                    const serverNameSpan = document.createElement('span');
+                    serverNameSpan.classList.add('panel-server-name');
+                    serverNameSpan.textContent = AppState.serverName;
+
+                    element.appendChild(playerNameSpan);
+                    element.appendChild(separatorSpan);
+                    element.appendChild(serverNameSpan);
+                    break;
+                case 'playerCount':
+                    element = document.createElement('p');
+                    element.classList.add('info-module-item', 'info-module-player-count');
+                    element.textContent = `${module.prefix || 'Players: '}${AppState.playerCount}`;
+                    break;
+                case 'discordLink':
+                    element = document.createElement('a');
+                    element.classList.add('info-module-item', 'info-module-link');
+                    element.href = module.url;
+                    element.target = '_blank';
+                    element.innerHTML = `<svg class="icon" fill="currentColor" viewBox="0 0 24 24" width="1em" height="1em"><path d="M20.25 0H3.75A3.75 3.75 0 000 3.75v16.5A3.75 3.75 0 003.75 24h16.5a3.75 3.75 0 003.75-3.75V3.75A3.75 3.75 0 0020.25 0zm-5.718 17.587c-.896.657-1.895 1.15-2.837 1.488-.344.116-.693.208-1.047.279-.208.043-.418.067-.63.078-.073.003-.146.005-.22.005-.072 0-.144-.002-.217-.005-.21-.011-.42-.035-.628-.078-.354-.07-.703-.163-1.047-.279-.942-.338-1.941-.831-2.837-1.488-.198-.145-.37-.29-.516-.445-.145-.155-.268-.31-.37-.47a.75.75 0 01.19-.94c.322-.24.787-.197 1.026.126.173.238.36.467.55.688.19.22.385.433.585.632.716.697 1.54.91 2.378.91.838 0 1.662-.213 2.378-.91.2-.199.395-.412.585-.632.19-.22.377-.45.55-.688.238-.323.704-.366 1.026-.126a.75.75 0 01.19.94c-.102.16-.225.315-.37.47-.146.155-.318.3-.516.445zM8.344 9.172a.75.75 0 01.75-.75.75.75 0 01.75.75v4.5a.75.75 0 01-.75.75.75.75 0 01-.75-.75V9.172zm7.312 0a.75.75 0 01.75-.75.75.75 0 01.75.75v4.5a.75.75 0 01-.75.75.75.75 0 01-.75-.75V9.172z"/></svg>`;
+                    element.append(document.createTextNode(module.text));
+                    break;
+                case 'websiteLink':
+                    element = document.createElement('a');
+                    element.classList.add('info-module-item', 'info-module-link');
+                    element.href = module.url;
+                    element.target = '_blank';
+                    element.innerHTML = `<svg class="icon" fill="currentColor" viewBox="0 0 24 24" width="1em" height="1em"><path d="M12 0C5.383 0 0 5.383 0 12s5.383 12 12 12 12-5.383 12-12S18.617 0 12 0zm0 2.25c.62 0 1.22.1 1.78.29.35-.61.64-1.25.86-1.9zm-1.78.29c-.56-.19-1.16-.29-1.78-.29-.62 0-1.22.1-1.78.29-.35.61-.64 1.25-.86 1.9zm-4.47 2.1c-.55.67-.97 1.4-1.26 2.16.8.29 1.58.63 2.32.99.39-.75.78-1.5 1.15-2.2zm4.47 2.1c.37-.7.76-1.45 1.15-2.2-.8-.3-1.58-.64-2.32-.99.55.67.97 1.4 1.26 2.16zm-7.79 3.55c.29-.8.64-1.58 1.05-2.32-.75-.39-1.5-.78-2.2-1.15.55.67.97 1.4 1.26 2.16zM2.25 12c0-.62.1-.1.29-.1.35-.61.64-1.25.86-1.9z"/></svg>`;
+                    element.append(document.createTextNode(module.text));
+                    break;
+                case 'customText':
+                    element = document.createElement('p');
+                    element.classList.add('info-module-item', 'info-module-custom-text');
+                    element.textContent = module.message;
+                    if (module.style) {
+                        if (module.style.includes('italic')) element.style.fontStyle = 'italic';
+                        if (module.style.includes('bold')) element.style.fontWeight = 'bold';
+                    }
+                    break;
+                default:
+                    console.warn(`Unknown server info module type: ${module.type}`);
+                    return;
+            }
+            dynamicInfoContent.appendChild(element);
+        });
+    }
 });
